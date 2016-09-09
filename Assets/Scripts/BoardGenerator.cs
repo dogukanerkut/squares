@@ -33,10 +33,11 @@ public class BoardGenerator : MonoBehaviour
 				tempBlock.transform.localScale = Vector3.one; // Instantiated objects has different scale value than 1 somehow.
 				blocks[i, j] = tempBlock;
 
-				tempBlock.GetComponent<Block>().SetBoardID(j, i);
+				tempBlock.GetComponent<Tile>().SetBoardID(j, i); //Set object's row and column
 			}
 		}
-	} 
+	}
+
 	// Update is called once per frame
 	void Update () {
 	

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Block : MonoBehaviour {
+public class Tile : MonoBehaviour {
 
 	// Use this for initialization
 	private int row;
