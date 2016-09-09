@@ -1,0 +1,8 @@
+Library/
+Temp/
+obj/
+.vs/Vertigo_Demo/v14/.suo
+Vertigo_Demo.CSharp.csproj
+Vertigo_Demo.sln
+Vertigo_Demo.userprefs
+Assembly-CSharp.csproj
