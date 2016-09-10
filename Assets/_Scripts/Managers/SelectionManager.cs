@@ -145,15 +145,34 @@ public class SelectionManager : MonoBehaviour
 	{
 		if (blocks.IsTilesAdjacentAndAvailable(currentTile.info, selectedTile.info))
 		{
-			previousTile = currentTile;
-			currentTile = selectedTile;
+			
 			//selectedTile.SetColor(Color.red);//debug
 			if (selectionCount < newBlocks.Count)
 			{
+				previousTile = currentTile;
+				currentTile = selectedTile;
+
 				selectedTile.SetColor(newBlocks[selectionCount].TileColor);
 				blocksPlaced.Add(selectedTile);
+				selectionCount++;
 			}
-			selectionCount++;
+		}
+		else if(blocksPlaced.Contains(selectedTile) && selectedTile == previousTile)
+		{
+			int index = blocksPlaced.IndexOf(selectedTile);
+			//for (int i = 0; i < blocksPlaced.Count; i++)
+			//{
+			if (index+1 < blocksPlaced.Count)
+			{
+				blocksPlaced[index+1].Clear();
+					blocksPlaced.RemoveAt(index+1);
+					selectionCount--;
+			}
+			//}
+			currentTile = selectedTile;
+			if (index > 0)
+				previousTile = blocksPlaced[index - 1];
+
 		}
 	}
 
@@ -166,7 +185,7 @@ public class SelectionManager : MonoBehaviour
 			{
 				for (int i = 0; i < blocksPlaced.Count; i++)
 				{
-					blocksPlaced[i].SetColor(Color.white);
+					blocksPlaced[i].Clear();
 				}
 			}
 			else
