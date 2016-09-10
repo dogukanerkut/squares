@@ -8,4 +8,6 @@ public static class Constants
 {
 	public static readonly string Tag_Tile = "Tile";
 	public static readonly string Tag_SelectionManager = "SelectionManager";
+	public static readonly int RowCount = 5;
+	public static readonly int ColumnCount = 5;
 }

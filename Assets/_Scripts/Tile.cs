@@ -7,11 +7,11 @@ using UnityEngine.UI;
 /// Referring To: 
 /// Referenced From: EventController.cs
 /// Attached To: Tile
-/// Description: Holder class for BaseTile.
+/// Description: Holder class for TileInfo.
 /// </summary>
 
-public class TileHolder : MonoBehaviour {
-	public BaseTile tile;
+public class Tile : MonoBehaviour {
+	public TileInfo info;
 
 	private Image tileImg;
 	void Awake ()
@@ -23,19 +23,19 @@ public class TileHolder : MonoBehaviour {
 	void Update () {
 	
 	}
-	public void SetupTile(int _row, int _column, Color _color)
+	public void FillInfo(int _row, int _column, Color _color)
 	{
-		tile = new BaseTile(_row, _column, _color);
+		info = new TileInfo(_row, _column, _color);
 		tileImg.color = _color;
 	}
 	public void SetColor(Color clr)
 	{
-		tile.TileColor = clr;
+		info.TileColor = clr;
 		tileImg.color = clr;
 	}
 	public void Clear()
 	{
-		tile.TileColor = Color.white;
+		info.TileColor = Color.white;
 		tileImg.color = Color.white;
 	}
 

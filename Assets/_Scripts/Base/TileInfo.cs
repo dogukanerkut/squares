@@ -9,9 +9,9 @@ using System.Collections;
 /// Attached To: 
 /// Description: Base class for holding primitive tile data.
 /// </summary>
-public class BaseTile
+public class TileInfo
 {
-	public BaseTile(int _row, int _column, Color _color)
+	public TileInfo(int _row, int _column, Color _color)
 	{
 		Row = _row;
 		Column = _column;
