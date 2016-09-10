@@ -1,5 +1,13 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿//Created by Doğukan Erkut.
+//Copyright(c) 2016 Doğukan Erkut all rights reserved.
+//Contact: dogukanerkut@gmail.com
+using UnityEngine;
+/// <summary>
+/// Referring To: SelectionManager.cs
+/// Referenced From: 
+/// Attached To: Tile
+/// Description: Controls the Event System.
+/// </summary>
 
 public class EventController : MonoBehaviour
 {
@@ -27,8 +35,8 @@ public class EventController : MonoBehaviour
 				}
 				
 			}
-			print(selectionManager.PreviousTile());
-			print(selectionManager.CurrentTile());
+			//print(selectionManager.PreviousTile());
+			//print(selectionManager.CurrentTile());
 		}
 		
 	}

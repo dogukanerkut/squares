@@ -1,6 +1,16 @@
-﻿using UnityEngine;
+﻿//Created by Doğukan Erkut.
+//Copyright(c) 2016 Doğukan Erkut all rights reserved.
+//Contact: dogukanerkut@gmail.com
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+/// <summary>
+/// Referring To: 
+/// Referenced From: SelectionManager.cs
+/// Attached To: BoardManager
+/// Description: (Singleton)Manages main board activities like generating a board, holding board data, returning tile data with given index etc.
+/// </summary>
+
 public class BoardManager : MonoBehaviour
 {
 	private static BoardManager instance;
@@ -17,7 +27,6 @@ public class BoardManager : MonoBehaviour
 		}
 	}
 
-	// Use this for initialization
 	public GameObject blockPrefab;
 	public static int row = 5;
 	public static int column = 5;

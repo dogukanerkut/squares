@@ -1,6 +1,14 @@
-﻿using UnityEngine;
+﻿//Created by Doğukan Erkut.
+//Copyright(c) 2016 Doğukan Erkut all rights reserved.
+//Contact: dogukanerkut@gmail.com
+using UnityEngine;
 using System.Collections;
-
+/// <summary>
+/// Referring To: 
+/// Referenced From: 
+/// Attached To: 
+/// Description: Base class for holding primitive tile data.
+/// </summary>
 public class BaseTile
 {
 	public BaseTile(int _row, int _column, Color _color)

@@ -1,8 +1,17 @@
-﻿using UnityEngine;
+﻿//Created by Doğukan Erkut.
+//Copyright(c) 2016 Doğukan Erkut all rights reserved.
+//Contact: dogukanerkut@gmail.com
+using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
+/// <summary>
+/// Referring To: BoardManager.cs(Singleton)
+/// Referenced From: EventController.cs
+/// Attached To: SelectionManager
+/// Description: Handles selection activities(when player presses and drags).
+/// </summary>
 public class SelectionManager : MonoBehaviour
 {
 
@@ -51,15 +60,20 @@ public class SelectionManager : MonoBehaviour
 		previousTile = currentTile; // assign current tile to previous tile as new tile will be current tile now
 		currentTile = newTile; // new tile is assigned to currentTile
 	}
-	public string PreviousTile()
-	{
-		return previousTile.tile.Row.ToString() + previousTile.tile.Column.ToString();
-	}
-	public string CurrentTile()
-	{
-		return currentTile.tile.Row.ToString() + currentTile.tile.Column.ToString();
-	}
+	//public string PreviousTile()
+	//{
+	//	return previousTile.tile.Row.ToString() + previousTile.tile.Column.ToString();
+	//}
+	//public string CurrentTile()
+	//{
+	//	return currentTile.tile.Row.ToString() + currentTile.tile.Column.ToString();
+	//}
 
+	/// <summary>
+	/// Checks if newly selected tile is both available and is adjacent to current tile and updates local tile variables if check is true.
+	/// </summary>
+	/// <param name="newTile"></param>
+	/// <returns></returns>
 	public bool IsTilesAdjacentAndAvailable(TileHolder newTile)
 	{
 		bool rBool = false;
@@ -72,7 +86,11 @@ public class SelectionManager : MonoBehaviour
 		}
 		return rBool;
 	}
-
+	/// <summary>
+	/// Checks if the newly selected tile is available(in terms of color).
+	/// </summary>
+	/// <param name="newTile"></param>
+	/// <returns></returns>
 	private bool CheckIfTileAvailable(BaseTile newTile)
 	{
 		bool rBool = false;
@@ -82,6 +100,12 @@ public class SelectionManager : MonoBehaviour
 		}
 		return rBool;
 	}
+	/// <summary>
+	/// Checks adjacent tiles of given tile1 and compares if tile2 is one of them(if it's adjacent to tile1).
+	/// </summary>
+	/// <param name="tile1">Main tile to check adjacency.</param>
+	/// <param name="tile2">Tile to be compared to tile1's adjacency.</param>
+	/// <returns></returns>
 	private bool CheckAdjacentTiles(BaseTile tile1, BaseTile tile2)
 	{
 		bool rBool = false;
@@ -89,13 +113,13 @@ public class SelectionManager : MonoBehaviour
 		//Right tile check
 		if (tile1.Row != BoardManager.row -1) // If it's not at the rightmost of the board
 			adjacentTiles.Add(BoardManager.Instance.GetTileInfo(tile1.Row + 1, tile1.Column)); // Add tile at the right of the tile1
-
+		//Left tile check
 		if (tile1.Row != 0) //If it's not at the leftmost of the board
 			adjacentTiles.Add(BoardManager.Instance.GetTileInfo(tile1.Row - 1, tile1.Column)); // Add tile at the left of the tile1
-
+		//Bottom tile check
 		if (tile1.Column != BoardManager.column -1)// If it's not at the bottom of the board
 			adjacentTiles.Add(BoardManager.Instance.GetTileInfo(tile1.Row, tile1.Column + 1)); // Add tile under tile1
-
+		//Top tile check
 		if (tile1.Column != 0)// If it's not at the top of the board
 			adjacentTiles.Add(BoardManager.Instance.GetTileInfo(tile1.Row, tile1.Column - 1)); // Add tile above tile1
 

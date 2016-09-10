@@ -1,6 +1,15 @@
-﻿using UnityEngine;
-using System.Collections;
+﻿//Created by Doğukan Erkut.
+//Copyright(c) 2016 Doğukan Erkut all rights reserved.
+//Contact: dogukanerkut@gmail.com
+using UnityEngine;
 using UnityEngine.UI;
+/// <summary>
+/// Referring To: 
+/// Referenced From: EventController.cs
+/// Attached To: Tile
+/// Description: Holder class for BaseTile.
+/// </summary>
+
 public class TileHolder : MonoBehaviour {
 	public BaseTile tile;
 
