@@ -17,6 +17,12 @@ public class SelectionManager : MonoBehaviour
 
 	// Use this for initialization
 	BlocksArray blocks;
+	ColorBase colorBase = new ColorBase();
+	BlocksCreator blocksCreator = new BlocksCreator();
+	List<TileInfo> newBlocks = new List<TileInfo>();
+	List<TileInfo> tempBlocks = new List<TileInfo>();
+
+	List<Tile> blocksPlaced = new List<Tile>();
 
 	Tile firstTile;
 	Tile currentTile;
@@ -30,10 +36,38 @@ public class SelectionManager : MonoBehaviour
 
 	public GameObject blockPrefab;
 	public RectTransform gamePanel;
+	public RectTransform newBlocksPanel;
+	private Image[] newBlockImages;
+
+	void Awake()
+	{
+		newBlockImages = newBlocksPanel.GetComponentsInChildren<Image>();
+	}
+
 	void Start ()
 	{
+
 		gameState = GameState.Idle;
 		GenerateBoard();
+
+		//ColorBase colorCreator = new ColorBase();
+		//TileInfo[] tileInfos = new TileInfo[Constants.ColumnCount * Constants.RowCount];
+		//int count = 0;
+		//for (int i = 0; i < Constants.ColumnCount; i++)
+		//{
+		//	for (int j = 0; j < Constants.RowCount; j++)
+		//	{
+		//		tileInfos[count] = blocks[j, i].GetComponent<Tile>().info;
+		//		count++;
+		//	}
+		//}
+		//colorCreator.FillColorInfo(tileInfos);
+		//print(blocks[0, 0].GetComponent<Tile>().info.TileColor);
+		//print(tileInfos[0].TileColor);
+		//print(tileInfos[1].TileColor);
+  //      blocks[0, 0].GetComponent<Tile>().SetColor(tileInfos[0].TileColor);
+		//blocks[0, 1].GetComponent<Tile>().SetColor(tileInfos[1].TileColor);
+
 	}
 
 	/// <summary>
@@ -58,6 +92,27 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Tile>().FillInfo(j, i, Color.white); //Set object's row and column
 			}
 		}
+		CreateBlocks();
+
+	}
+	/// <summary>
+	/// Create new blocks, assign their colors and arrange the new block images.
+	/// </summary>
+	void CreateBlocks()
+	{
+		newBlocks.Clear();
+		newBlocks = blocksCreator.GetRandomBlocks();
+		colorBase.FillColorInfo(newBlocks);
+		for (int i = 0; i < newBlockImages.Length; i++)
+		{
+			newBlockImages[i].gameObject.SetActive(false);
+		}
+		for (int i = 0; i < newBlocks.Count; i++)
+		{
+			newBlockImages[i].gameObject.SetActive(true);
+			newBlockImages[i].color = newBlocks[i].TileColor;
+		}
+
 	}
 	void ResetBoard()
 	{
@@ -78,7 +133,9 @@ public class SelectionManager : MonoBehaviour
 			firstTile = selectedTile;
 			currentTile = selectedTile;
 			previousTile = selectedTile;
-			selectedTile.SetColor(Color.red);//debug
+			//selectedTile.SetColor(Color.red);//debug
+			selectedTile.SetColor(newBlocks[selectionCount].TileColor);
+			blocksPlaced.Add(selectedTile);
 			selectionCount++;
 		}
 		
@@ -90,10 +147,36 @@ public class SelectionManager : MonoBehaviour
 		{
 			previousTile = currentTile;
 			currentTile = selectedTile;
-			selectedTile.SetColor(Color.red);//debug
+			//selectedTile.SetColor(Color.red);//debug
+			if (selectionCount < newBlocks.Count)
+			{
+				selectedTile.SetColor(newBlocks[selectionCount].TileColor);
+				blocksPlaced.Add(selectedTile);
+			}
 			selectionCount++;
 		}
+	}
 
+	public void TerminateSelection()
+	{
+		if (selectionCount > 0)
+		{
+
+			if (blocksPlaced.Count < newBlocks.Count)
+			{
+				for (int i = 0; i < blocksPlaced.Count; i++)
+				{
+					blocksPlaced[i].SetColor(Color.white);
+				}
+			}
+			else
+			{
+				CreateBlocks();
+			}
+			selectionCount = 0;
+			blocksPlaced.Clear();
+			selectionStarted = false;
+		}
 
 	}
 	public void EndSelection()

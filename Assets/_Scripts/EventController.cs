@@ -51,4 +51,12 @@ public class EventController : MonoBehaviour
 		//selectionManager.EndSelection();
 	}
 
+	void Update()
+	{
+		if (Input.GetMouseButtonUp(0))
+		{
+			selectionManager.TerminateSelection();
+		}
+	}
+
 }

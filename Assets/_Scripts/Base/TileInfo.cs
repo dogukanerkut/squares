@@ -11,6 +11,12 @@ using System.Collections;
 /// </summary>
 public class TileInfo
 {
+	public TileInfo()
+	{
+		Row = -1;
+		Column = -1;
+		tileColor = Color.white;
+	}
 	public TileInfo(int _row, int _column, Color _color)
 	{
 		Row = _row;

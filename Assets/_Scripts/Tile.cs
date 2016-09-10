@@ -19,10 +19,6 @@ public class Tile : MonoBehaviour {
 		tileImg = GetComponent<Image>();
 	}
 	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 	public void FillInfo(int _row, int _column, Color _color)
 	{
 		info = new TileInfo(_row, _column, _color);
