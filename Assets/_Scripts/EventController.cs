@@ -21,7 +21,7 @@ public class EventController : MonoBehaviour
 
 	public void OnPointerEnter()
 	{
-		if (selectionManager.SelectionStarted) // if the selection started during OnPointerEnter event
+		if (selectionManager.CurGameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
 		{
 			Tile selectedTile = GetComponent<Tile>();
 
