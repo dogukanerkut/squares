@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// Referring To: SelectionManager.cs
 /// Referenced From: 
-/// Attached To: Tile
+/// Attached To: Block
 /// Description: Controls the Event System.
 /// </summary>
 public class EventController : MonoBehaviour
@@ -22,28 +22,28 @@ public class EventController : MonoBehaviour
 	{
 		if (selectionManager.CurGameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
 		{
-			Tile selectedTile = GetComponent<Tile>();
+			Block selectedBlock = GetComponent<Block>();
 
-			selectionManager.SetSelectedTile(selectedTile);
+			selectionManager.SetSelectedBlock(selectedBlock);
 
-			//if (selectedTile.tile.TileColor == Color.white)
+			//if (selectedBlock.block.BlockColor == Color.white)
 			//{
-			//	//selectionManager.SetSelectedTile(selectedTile);
-			//	if (selectionManager.IsTilesAdjacentAndAvailable(selectedTile))
+			//	//selectionManager.SetSelectedBlock(selectedBlock);
+			//	if (selectionManager.IsBlocksAdjacentAndAvailable(selectedBlock))
 			//	{
-			//		selectedTile.SetColor(Color.red);
+			//		selectedBlock.SetColor(Color.red);
 			//	}
 				
 			//}
-			//print(selectionManager.PreviousTile());
-			//print(selectionManager.CurrentTile());
+			//print(selectionManager.PreviousBlock());
+			//print(selectionManager.CurrentBlock());
 		}
 		
 	}
 	public void OnPointerDown()
 	{
-		Tile selectedTile = GetComponent<Tile>();
-			selectionManager.StartSelection(selectedTile);
+		Block selectedBlock = GetComponent<Block>();
+			selectionManager.StartSelection(selectedBlock);
 	}
 	public void OnPointerExit()
 	{

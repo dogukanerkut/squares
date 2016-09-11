@@ -7,21 +7,21 @@ using System.Collections;
 /// Referring To: 
 /// Referenced From: 
 /// Attached To: 
-/// Description: Base class for holding primitive tile data.
+/// Description: Base class for holding primitive block data.
 /// </summary>
-public class TileInfo
+public class BlockInfo
 {
-	public TileInfo()
+	public BlockInfo()
 	{
 		Row = -1;
 		Column = -1;
-		tileColor = Color.white;
+		blockColor = Color.white;
 	}
-	public TileInfo(int _row, int _column, Color _color)
+	public BlockInfo(int _row, int _column, Color _color)
 	{
 		Row = _row;
 		Column = _column;
-		TileColor = _color;
+		BlockColor = _color;
 	}
 	private int column;
 	public int Column
@@ -50,22 +50,22 @@ public class TileInfo
 			row = value;
 		}
 	}
-	private Color tileColor;
-	public Color TileColor
+	private Color blockColor;
+	public Color BlockColor
 	{
 		get
 		{
-			return tileColor;
+			return blockColor;
 		}
 
 		set
 		{
-			tileColor = value;
+			blockColor = value;
 		}
 	}
 
 	private bool tested;
-	public bool isChecked
+	public bool IsChecked
 	{
 		get
 		{

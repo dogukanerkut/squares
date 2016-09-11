@@ -19,14 +19,12 @@ public class SelectionManager : MonoBehaviour
 	BlocksArray blocks;
 	ColorBase colorBase = new ColorBase();
 	BlocksCreator blocksCreator = new BlocksCreator();
-	List<TileInfo> newBlocks = new List<TileInfo>();
-	List<TileInfo> tempBlocks = new List<TileInfo>();
+	List<BlockInfo> newBlocks = new List<BlockInfo>();
 
-	List<Tile> blocksPlaced = new List<Tile>();
+	List<Block> blocksPlaced = new List<Block>();
 
-	Tile firstTile;
-	Tile currentTile;
-	Tile previousTile;
+	Block currentBlock;
+	Block previousBlock;
 	private int selectionCount = 0;
 	private GameState gameState;
 	public GameState CurGameState
@@ -68,7 +66,7 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.transform.localScale = Vector3.one; // Instantiated objects has different scale value than 1 somehow?
 				blocks[j, i] = tempBlock;
 
-				tempBlock.GetComponent<Tile>().FillInfo(j, i, Color.white); //Set object's row and column
+				tempBlock.GetComponent<Block>().FillInfo(j, i, Color.white); //Set object's row and column
 			}
 		}
 		CreateBlocks();
@@ -83,13 +81,12 @@ public class SelectionManager : MonoBehaviour
 		newBlocks = blocksCreator.GetRandomBlocks();
 		colorBase.FillColorInfo(newBlocks);
 		for (int i = 0; i < newBlockImages.Length; i++)
-		{
 			newBlockImages[i].gameObject.SetActive(false);
-		}
+
 		for (int i = 0; i < newBlocks.Count; i++)
 		{
 			newBlockImages[i].gameObject.SetActive(true);
-			newBlockImages[i].color = newBlocks[i].TileColor;
+			newBlockImages[i].color = newBlocks[i].BlockColor;
 		}
 
 	}
@@ -98,39 +95,35 @@ public class SelectionManager : MonoBehaviour
 		for (int i = 0; i < Constants.ColumnCount; i++)
 		{
 			for (int j = 0; j < Constants.RowCount; j++)
-			{
-				blocks[j, i].GetComponent<Tile>().Clear();
-			}
+				blocks[j, i].GetComponent<Block>().Clear();
 		}
 	}
-	/// <summary>
-	/// <para>When player first touches a block, Update touched block and start touching process.</para>
-	/// </summary>
-	/// <param name="selectedTile"></param>
-	public void StartSelection(Tile selectedTile)
-	{
-		//Checks if tile is white
-		if (blocks.CheckIfTileAvailable(selectedTile.info))
-		{
-			//selectionStarted = true;
-			gameState = GameState.SelectionStarted; //Start selection process
-			firstTile = selectedTile;
-			currentTile = selectedTile;
-			previousTile = selectedTile;
 
-			UpdateSelectedBlock(selectedTile);
+	/// <summary>
+	/// When player first touches a block, Update touched block and start touching process.
+	/// </summary>
+	/// <param name="selectedBlock"></param>
+	public void StartSelection(Block selectedBlock)
+	{
+		//Checks if block is white
+		if (blocks.CheckIfBlockAvailable(selectedBlock.info))
+		{
+			gameState = GameState.SelectionStarted; //Start selection process
+			currentBlock = selectedBlock;
+			previousBlock = selectedBlock;
+
+			UpdateSelectedBlock(selectedBlock);
 		}
-		
 	}
 
 	/// <summary>
 	/// Appends the changes on selected block(sets it's color, adds it  to placed blocks list and updates selection count
 	/// </summary>
-	/// <param name="selectedTile"></param>
-	private void UpdateSelectedBlock(Tile selectedTile)
+	/// <param name="selectedBlock"></param>
+	private void UpdateSelectedBlock(Block selectedBlock)
 	{
-		selectedTile.SetColor(newBlocks[selectionCount].TileColor);//Set color of selected block to queued new block
-		blocksPlaced.Add(selectedTile); // add currently selected block to the list of placed blocks(we will need it later)
+		selectedBlock.SetColor(newBlocks[selectionCount].BlockColor);//Set color of selected block to queued new block
+		blocksPlaced.Add(selectedBlock); // add currently selected block to the list of placed blocks(we will need it later)
 		selectionCount++; // increase the selection count so next time the queued block will be placed
 	}
 
@@ -138,88 +131,87 @@ public class SelectionManager : MonoBehaviour
 	/// <para>When player continues to drag his finger on other blocks</para>
 	/// <para>Do stuff accordingly(revert selection or add newblocks in queue).</para>
 	/// </summary>
-	/// <param name="selectedTile"></param>
-	public void SetSelectedTile(Tile selectedTile)
+	/// <param name="selectedBlock"></param>
+	public void SetSelectedBlock(Block selectedBlock)
 	{
 		//if player intends to add new block on queue to grid which is adjacent to previous one 
-		if (blocks.IsTilesAdjacentAndAvailable(currentTile.info, selectedTile.info))
+		if (blocks.IsBlocksAdjacentAndAvailable(currentBlock.info, selectedBlock.info))
 		{
-			// if number of selected tiles is not bigger than newly created blocks
+			// if number of selected blocks is not bigger than newly created blocks
 			if (selectionCount < newBlocks.Count)
 			{
-				// Purpose of this to track current and previous tiles 
+				// Purpose of this to track current and previous blocks 
 				// In order to revert our selection
-				previousTile = currentTile; // Set current tile as previous tile as it will become previous tile after this selection
-				currentTile = selectedTile; // Set newly selected tile as current tile
+				previousBlock = currentBlock; // Set current block as previous block as it will become previous block after this selection
+				currentBlock = selectedBlock; // Set newly selected block as current block
 
-				UpdateSelectedBlock(selectedTile); // hover to method to see description
+				UpdateSelectedBlock(selectedBlock); // hover to method to see description
 			}
 		}
 		// if player intends to revert his placed block by going backwards in placed blocks.
-		else if(blocksPlaced.Contains(selectedTile) && selectedTile == previousTile)
+		else if(blocksPlaced.Contains(selectedBlock) && selectedBlock == previousBlock)
 		{
 			//player's finger is on previous block so remove the last placed block
-			int selectedTileIndex = blocksPlaced.IndexOf(selectedTile);//get index of previous block
+			int selectedBlockIndex = blocksPlaced.IndexOf(selectedBlock);//get index of previous block
 
-			//this check is required to prevent error when there is only one tile exists and therefore index+1 is out of range
-			if (selectedTileIndex+1 < blocksPlaced.Count) // if the last placed block's index is smaller than number of blocksPlaced
+			//this check is required to prevent error when there is only one block exists and therefore index+1 is out of range
+			if (selectedBlockIndex+1 < blocksPlaced.Count) // if the last placed block's index is smaller than number of blocksPlaced
 			{
 				//remove last placed block and update selection count accordingly
-				blocksPlaced[selectedTileIndex+1].Clear();
-				blocksPlaced.RemoveAt(selectedTileIndex+1);
+				blocksPlaced[selectedBlockIndex+1].Clear();
+				blocksPlaced.RemoveAt(selectedBlockIndex+1);
 				selectionCount--;
 			}
-			currentTile = selectedTile; // previously selected tile is now currently selected tile
-			if (selectedTileIndex > 0) //this check is required to prevent error when there is only one tile exists and therefore index-1 is out of range
-				previousTile = blocksPlaced[selectedTileIndex - 1]; // update previousTile
+			currentBlock = selectedBlock; // previously selected block is now currently selected block
+			if (selectedBlockIndex > 0) //this check is required to prevent error when there is only one block exists and therefore index-1 is out of range
+				previousBlock = blocksPlaced[selectedBlockIndex - 1]; // update previousBlock
 
 		}
 	}
 	/// <summary>
 	/// <para>This code runs when player releases finger.</para>
 	/// <para>If player wants to terminate the selection(either by trying to place all queued new blocks or simply revert it's selection.</para>
+	/// <para>If player places blocks, check for adjacency, if any 3 or more same color adjacent blocks found, destroy them.</para>
 	/// </summary>
 	public void TerminateSelection()
 	{
-		if (selectionCount > 0)// check if any selection made
+		if (selectionCount > 0)// check if any selection made //
 		{
-			
 			if (blocksPlaced.Count < newBlocks.Count) // if player didn't place all of given blocks yet
 			{
 				//remove all blocks that are temporarily placed to grid
 				for (int i = 0; i < blocksPlaced.Count; i++)
-				{
 					blocksPlaced[i].Clear();
-				}
 			}
-			else // if player placed all of given blocks to grid
+			else // player placed all of given blocks to grid
 			{
 				CreateBlocks(); // create new blocks to continue the game
 
-				// control of "3 or more adjacent blocks exist codes" goes here
+				//Start recursive function for every single block that has been placed this turn.
 				for (int i = 0; i < blocksPlaced.Count; i++)
 				{
 					blocks.Check3Match(blocksPlaced[i].info);
 				}
+				//After recursive function does its job of obtaining and assigning all 3 or more adjacent-same-color blocks
+				//to a list seperately, check if that list contains any list(if any 3 or more adjacent-same-color blocks exist)
+				// if that's true clear all catched 3 or more adjacent-same-color blocks
 				if (blocks.IsBlockListHasBlocks())
 				{
-					List<List<Tile>> matchedBlocksList = blocks.GetMatchedBlockLists();
-					foreach (List<Tile> adjacentBlocksWithSameColor in matchedBlocksList)
+					List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists();
+					foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
 					{
-						foreach (Tile adjacentBlock in adjacentBlocksWithSameColor)
+						//score calculation goes here
+						//TODO: Score Calculation!
+						foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
 						{
 							adjacentBlock.Clear();
+							//score calculation goes here
 						}
 					}
-					blocks.ClearMatchedBlockLists();
+					blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
 				}
-				else
-				{
-					print("List Empty!");
-				}
-				
-				// control of "if existing adjacent empty blocks' count is higher than newly introduced blocks' count" goes here
-				// if not then the game is over.
+				// TODO:control of "if existing adjacent empty blocks' count is higher than newly introduced blocks' count" goes here
+				// TODO:if not then the game is over.
 			}
 			//regardless of the conditions above, the player is released fingers
 			//and we need to reset the selectionCount and blocksPlaced list
@@ -228,12 +220,10 @@ public class SelectionManager : MonoBehaviour
 			blocksPlaced.Clear();
 			gameState = GameState.Idle;
 		}
-
 	}
 	public void ClearSelection()
 	{
-		firstTile = null;
-		currentTile = null;
+		currentBlock = null;
 		selectionCount = 0;
 	}
 

@@ -6,35 +6,35 @@ using UnityEngine.UI;
 /// <summary>
 /// Referring To: 
 /// Referenced From: EventController.cs
-/// Attached To: Tile
-/// Description: Holder class for TileInfo.
+/// Attached To: Block
+/// Description: Holder class for BlockInfo.
 /// </summary>
 
-public class Tile : MonoBehaviour {
-	public TileInfo info;
+public class Block : MonoBehaviour {
+	public BlockInfo info;
 
-	private Image tileImg;
+	private Image blockImg;
 
 	void Awake ()
 	{
-		tileImg = GetComponent<Image>();
+		blockImg = GetComponent<Image>();
 	}
 	
 	public void FillInfo(int _row, int _column, Color _color)
 	{
-		info = new TileInfo(_row, _column, _color);
-		tileImg.color = _color;
+		info = new BlockInfo(_row, _column, _color);
+		blockImg.color = _color;
 	}
 	public void SetColor(Color clr)
 	{
-		info.TileColor = clr;
-		tileImg.color = clr;
+		info.BlockColor = clr;
+		blockImg.color = clr;
 	}
 	public void Clear()
 	{
-		info.TileColor = Color.white;
-		tileImg.color = Color.white;
-		info.isChecked = false;
+		info.BlockColor = Color.white;
+		blockImg.color = Color.white;
+		info.IsChecked = false;
 	}
 
 }

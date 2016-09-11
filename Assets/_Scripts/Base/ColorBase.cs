@@ -49,13 +49,13 @@ public class ColorBase
 		return currentColors[Random.Range(0, currentColors.Count)];
 	}
 
-	public void FillColorInfo(List<TileInfo> tileInfos)
+	public void FillColorInfo(List<BlockInfo> blockInfos)
 	{
-		for (int i = 0; i < tileInfos.Count; i++)
+		for (int i = 0; i < blockInfos.Count; i++)
 		{
-			tileInfos[i].TileColor = GetRandomColor();
+			blockInfos[i].BlockColor = GetRandomColor();
 		}
-		//return tileInfos;
+		//return blockInfos;
 	}
 
 
