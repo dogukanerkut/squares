@@ -63,4 +63,21 @@ public class TileInfo
 			tileColor = value;
 		}
 	}
+
+	private bool tested;
+	public bool isChecked
+	{
+		get
+		{
+			return tested;
+		}
+
+		set
+		{
+			tested = value;
+		}
+	}
+
+
+
 }

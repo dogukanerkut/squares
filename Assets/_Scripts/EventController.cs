@@ -8,7 +8,6 @@ using UnityEngine;
 /// Attached To: Tile
 /// Description: Controls the Event System.
 /// </summary>
-
 public class EventController : MonoBehaviour
 {
 	

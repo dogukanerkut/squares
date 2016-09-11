@@ -159,19 +159,19 @@ public class SelectionManager : MonoBehaviour
 		else if(blocksPlaced.Contains(selectedTile) && selectedTile == previousTile)
 		{
 			//player's finger is on previous block so remove the last placed block
-			int index = blocksPlaced.IndexOf(selectedTile);//get index of previous block
+			int selectedTileIndex = blocksPlaced.IndexOf(selectedTile);//get index of previous block
 
 			//this check is required to prevent error when there is only one tile exists and therefore index+1 is out of range
-			if (index+1 < blocksPlaced.Count) // if the last placed block's index is smaller than number of blocksPlaced
+			if (selectedTileIndex+1 < blocksPlaced.Count) // if the last placed block's index is smaller than number of blocksPlaced
 			{
 				//remove last placed block and update selection count accordingly
-				blocksPlaced[index+1].Clear();
-				blocksPlaced.RemoveAt(index+1);
+				blocksPlaced[selectedTileIndex+1].Clear();
+				blocksPlaced.RemoveAt(selectedTileIndex+1);
 				selectionCount--;
 			}
 			currentTile = selectedTile; // previously selected tile is now currently selected tile
-			if (index > 0) //this check is required to prevent error when there is only one tile exists and therefore index-1 is out of range
-				previousTile = blocksPlaced[index - 1]; // update previousTile
+			if (selectedTileIndex > 0) //this check is required to prevent error when there is only one tile exists and therefore index-1 is out of range
+				previousTile = blocksPlaced[selectedTileIndex - 1]; // update previousTile
 
 		}
 	}
@@ -197,7 +197,27 @@ public class SelectionManager : MonoBehaviour
 				CreateBlocks(); // create new blocks to continue the game
 
 				// control of "3 or more adjacent blocks exist codes" goes here
-
+				for (int i = 0; i < blocksPlaced.Count; i++)
+				{
+					blocks.Check3Match(blocksPlaced[i].info);
+				}
+				if (blocks.IsBlockListHasBlocks())
+				{
+					List<List<Tile>> matchedBlocksList = blocks.GetMatchedBlockLists();
+					foreach (List<Tile> adjacentBlocksWithSameColor in matchedBlocksList)
+					{
+						foreach (Tile adjacentBlock in adjacentBlocksWithSameColor)
+						{
+							adjacentBlock.Clear();
+						}
+					}
+					blocks.ClearMatchedBlockLists();
+				}
+				else
+				{
+					print("List Empty!");
+				}
+				
 				// control of "if existing adjacent empty blocks' count is higher than newly introduced blocks' count" goes here
 				// if not then the game is over.
 			}

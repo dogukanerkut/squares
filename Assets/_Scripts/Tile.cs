@@ -14,6 +14,7 @@ public class Tile : MonoBehaviour {
 	public TileInfo info;
 
 	private Image tileImg;
+
 	void Awake ()
 	{
 		tileImg = GetComponent<Image>();
@@ -33,6 +34,7 @@ public class Tile : MonoBehaviour {
 	{
 		info.TileColor = Color.white;
 		tileImg.color = Color.white;
+		info.isChecked = false;
 	}
 
 }
