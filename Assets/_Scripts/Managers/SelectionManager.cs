@@ -30,9 +30,6 @@ public class SelectionManager : MonoBehaviour
 	public GameState CurGameState
 	{ get { return gameState; } }
 
-
-
-
 	public GameObject blockPrefab;
 	public RectTransform gamePanel;
 	public RectTransform newBlocksPanel;
@@ -113,6 +110,7 @@ public class SelectionManager : MonoBehaviour
 			previousBlock = selectedBlock;
 
 			UpdateSelectedBlock(selectedBlock);
+			SoundManager.Instance.PlayPlaceBlock();
 		}
 	}
 
@@ -146,6 +144,7 @@ public class SelectionManager : MonoBehaviour
 				currentBlock = selectedBlock; // Set newly selected block as current block
 
 				UpdateSelectedBlock(selectedBlock); // hover to method to see description
+				SoundManager.Instance.PlayPlaceBlock();
 			}
 		}
 		// if player intends to revert his placed block by going backwards in placed blocks.
@@ -161,6 +160,7 @@ public class SelectionManager : MonoBehaviour
 				blocksPlaced[selectedBlockIndex+1].Clear();
 				blocksPlaced.RemoveAt(selectedBlockIndex+1);
 				selectionCount--;
+				SoundManager.Instance.PlayRetrieveBlock();
 			}
 			currentBlock = selectedBlock; // previously selected block is now currently selected block
 			if (selectedBlockIndex > 0) //this check is required to prevent error when there is only one block exists and therefore index-1 is out of range
@@ -182,9 +182,12 @@ public class SelectionManager : MonoBehaviour
 				//remove all blocks that are temporarily placed to grid
 				for (int i = 0; i < blocksPlaced.Count; i++)
 					blocksPlaced[i].Clear();
+
+				SoundManager.Instance.PlayRetrieveBlock();
 			}
 			else // player placed all of given blocks to grid
 			{
+				SoundManager.Instance.ResetPlaceBlockPitch();
 				CreateBlocks(); // create new blocks to continue the game
 
 				//Start recursive function for every single block that has been placed this turn.
@@ -197,7 +200,11 @@ public class SelectionManager : MonoBehaviour
 				// if that's true clear all catched 3 or more adjacent-same-color blocks
 				if (blocks.IsBlockListHasBlocks())
 				{
-					List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists();
+					List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists(); // retrieve matched block list
+					if (matchedBlocksList.Count == 1) // if no combo occurs
+						SoundManager.Instance.PlayBlockExplode();
+					else // if combo occurs
+						SoundManager.Instance.PlayBlockExplodeCombo();
 					foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
 					{
 						//score calculation goes here
