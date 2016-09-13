@@ -17,7 +17,7 @@ public class SelectionManager : MonoBehaviour
 
 	// Use this for initialization
 	public UnityEvent GameOverEvent;
-	BlocksArray blocks;
+	public BlocksArray blocks;
 	ColorBase colorBase = new ColorBase();
 	List<BlockInfo> newBlocks = new List<BlockInfo>();
 
@@ -33,17 +33,23 @@ public class SelectionManager : MonoBehaviour
 	public GameObject blockPrefab;
 	public RectTransform gamePanel;
 	public RectTransform newBlocksPanel;
+	public Text scoreText;
+	private int score;
+	private int updatedScore;
 	private Image[] newBlockImages;
-
+	
 	void Awake()
 	{
 		newBlockImages = newBlocksPanel.GetComponentsInChildren<Image>();
+		gameState = GameState.Idle;
+		GenerateBoard();
+		GridLayoutGroup gamePanelGLG = gamePanel.GetComponent<GridLayoutGroup>();
+		gamePanelGLG.constraintCount = Constants.RowCount; // if grid size is changed, adjust constrain count accordingly
 	}
 
 	void Start ()
 	{
-		gameState = GameState.Idle;
-		GenerateBoard();
+		
 	}
 
 	/// <summary>
@@ -66,31 +72,31 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Block>().FillInfo(j, i, Color.white); //Set object's row and column
 			}
 		}
-		blocks[0, 3].GetComponent<Block>().SetColor(Color.white);
-		//blocks[0, 2].GetComponent<Block>().SetColor(Color.white);
-		blocks[1, 3].GetComponent<Block>().SetColor(Color.white);
-		blocks[1, 2].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[0, 3].GetComponent<Block>().SetColor(Color.white);
+	//	//blocks[0, 2].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[1, 3].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[1, 2].GetComponent<Block>().SetColor(Color.white);
+	////	blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
+	////blocks[0,2].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[2, 0].GetComponent<Block>().SetColor(Color.white);
+	//	//blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
+	//	//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[4, 0].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[4, 1].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[4, 2].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[4, 3].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[4, 4].GetComponent<Block>().SetColor(Color.white);
+	////	blocks[1, 1].GetComponent<Block>().SetColor(Color.white);
 	//	blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
-	//blocks[0,2].GetComponent<Block>().SetColor(Color.white);
-		blocks[2, 0].GetComponent<Block>().SetColor(Color.white);
-		//blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
-		//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
-		blocks[4, 0].GetComponent<Block>().SetColor(Color.white);
-		blocks[4, 1].GetComponent<Block>().SetColor(Color.white);
-		blocks[4, 2].GetComponent<Block>().SetColor(Color.white);
-		blocks[4, 3].GetComponent<Block>().SetColor(Color.white);
-		blocks[4, 4].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[1, 1].GetComponent<Block>().SetColor(Color.white);
-		blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
-		blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
-		//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
+	//	//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
 		CreateBlocks();
 
 	}
-	private Color RandomColor()
-	{
-		return new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-	}
+	//private Color RandomColor()
+	//{
+	//	return new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+	//}
 	/// <summary>
 	/// Create new blocks, assign their colors and arrange the new block images.
 	/// </summary>
@@ -224,16 +230,15 @@ public class SelectionManager : MonoBehaviour
 					ExplodeBlocks();
 				}
 
-				// TODO:control of "if existing adjacent empty blocks' count is higher than newly introduced blocks' count" goes here
+				// if there are any place for our newblock to be placed
 				if (blocks.CheckEmptyBlocks(newBlocks.Count))
 				{
 					gameState = GameState.Idle;
 				}
-				else
+				else // game over here
 				{
 					gameState = GameState.GameOver;
 					GameOverEvent.Invoke();
-					// TODO:if not then the game is over.
 				}
 
 			}
@@ -252,17 +257,37 @@ public class SelectionManager : MonoBehaviour
 		else // if combo occurs
 			SoundManager.Instance.PlayBlockExplodeCombo();
 
+		int scoreMultiplier = matchedBlocksList.Count;
+		int score = 0;
+		int totalScore = 0;
 		foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
 		{
-			//score calculation goes here
-			//TODO: Score Calculation!
+			score = adjacentBlocksWithSameColor.Count * scoreMultiplier; // score per block
+			totalScore += adjacentBlocksWithSameColor.Count * score; //score for total blocks added
 			foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
 			{
+				StartTextAnimation(adjacentBlock, score);
 				adjacentBlock.Clear(); // explode blocks(set their color to white etc.)
-				//score calculation goes here
 			}
 		}
+		isScoreIncreased = true;
+		updatedScore += totalScore;
 		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
+	}
+	private bool isScoreIncreased;
+	/// <summary>
+	/// Starts floating text animation for every block that is going to be exploded.
+	/// </summary>
+	/// <param name="block">block to be exploded.</param>
+	/// <param name="points">points to be shown.</param>
+	private void StartTextAnimation(Block block, int points)
+	{
+		Animator an = block.GetComponentInChildren<Animator>();
+		Text tx = block.GetComponentInChildren<Text>();
+		tx.color = block.info.BlockColor;
+		tx.text = "+" + points.ToString();
+		an.SetTrigger("startFloat");
+
 	}
 	public void ClearSelection()
 	{
@@ -277,6 +302,17 @@ public class SelectionManager : MonoBehaviour
 	}
 
 
+	void Update()
+	{
+		//Score Text Animation
+		if (isScoreIncreased)
+		{
+			score = Utilities.IntLerp(score, updatedScore, 0.03f);
+			scoreText.text = score.ToString();
+			if (score == updatedScore)
+				isScoreIncreased = false;
+		}
+	}
 	//List<RaycastResult> results = new List<RaycastResult>();
 //	void Update ()
 //	{

@@ -3,15 +3,19 @@
 //Contact: dogukanerkut@gmail.com
 using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 /// <summary>
 /// Referring To: 
 /// Referenced From: 
 /// Attached To: 
 /// Description: 
 /// </summary>
-public class UIManager : MonoBehaviour {
+public class UIManager : MonoBehaviour
+{
 
 	public GameObject gameOverPanel;
+	public SelectionManager selectionManager;
+	public Transform gameBoardCanvas;
 	// Use this for initialization
 	public void GameOver()
 	{
@@ -21,14 +25,5 @@ public class UIManager : MonoBehaviour {
 	{
 		gameOverPanel.SetActive(false);
 	}
-	void Start () 
-	{
-	
-	}
-	
 	// Update is called once per frame
-	void Update () 
-	{
-	
-	}
 }
