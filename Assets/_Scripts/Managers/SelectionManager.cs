@@ -66,8 +66,30 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Block>().FillInfo(j, i, Color.white); //Set object's row and column
 			}
 		}
+		blocks[0, 3].GetComponent<Block>().SetColor(Color.white);
+		//blocks[0, 2].GetComponent<Block>().SetColor(Color.white);
+		blocks[1, 3].GetComponent<Block>().SetColor(Color.white);
+		blocks[1, 2].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
+	//blocks[0,2].GetComponent<Block>().SetColor(Color.white);
+		blocks[2, 0].GetComponent<Block>().SetColor(Color.white);
+		//blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
+		//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
+		blocks[4, 0].GetComponent<Block>().SetColor(Color.white);
+		blocks[4, 1].GetComponent<Block>().SetColor(Color.white);
+		blocks[4, 2].GetComponent<Block>().SetColor(Color.white);
+		blocks[4, 3].GetComponent<Block>().SetColor(Color.white);
+		blocks[4, 4].GetComponent<Block>().SetColor(Color.white);
+	//	blocks[1, 1].GetComponent<Block>().SetColor(Color.white);
+		blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
+		blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
+		//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
 		CreateBlocks();
 
+	}
+	private Color RandomColor()
+	{
+		return new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
 	}
 	/// <summary>
 	/// Create new blocks, assign their colors and arrange the new block images.
@@ -217,8 +239,18 @@ public class SelectionManager : MonoBehaviour
 					}
 					blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
 				}
+
 				// TODO:control of "if existing adjacent empty blocks' count is higher than newly introduced blocks' count" goes here
-				// TODO:if not then the game is over.
+				if (blocks.CheckEmptyBlocks(newBlocks.Count))
+				{
+					print("Empty blocks exist!");
+				}
+				else
+				{
+					print("Game Over");
+					// TODO:if not then the game is over.
+				}
+
 			}
 			//regardless of the conditions above, the player is released fingers
 			//and we need to reset the selectionCount and blocksPlaced list

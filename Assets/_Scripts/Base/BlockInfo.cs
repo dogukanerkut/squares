@@ -63,21 +63,38 @@ public class BlockInfo
 			blockColor = value;
 		}
 	}
-
-	private bool tested;
+	/// <summary>
+	/// this flag is for controlling adjacent blocks
+	/// </summary>
+	private bool isChecked;
 	public bool IsChecked
 	{
 		get
 		{
-			return tested;
+			return isChecked;
 		}
 
 		set
 		{
-			tested = value;
+			isChecked = value;
 		}
 	}
+	/// <summary>
+	/// this flag is for controlling empty blocks
+	/// </summary>
+	private bool isDeadEnd;
+	public bool IsDeadEnd
+	{
+		get
+		{
+			return isDeadEnd;
+		}
 
+		set
+		{
+			isDeadEnd = value;
+		}
+	}
 
 
 }

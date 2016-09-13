@@ -21,6 +21,7 @@ public class BlocksCreator
 		if (random < 65) //"two and three has 65% chance to be retrieved and "one or four" has 35% chance.
 			blockGroup = GetTwoOrThreeBlocks();
 		else
+			//HACK: Temporarily disabled
 			blockGroup = GetOneOrFourBlocks();
 
 		return blockGroup;
@@ -35,7 +36,8 @@ public class BlocksCreator
 			blockGroup = GetBlocks(1);
 		else
 			blockGroup = GetBlocks(4);
-        return blockGroup;
+			//HACK: Temporarily disabled
+		return blockGroup;
 	}
 
 	private List<BlockInfo> GetTwoOrThreeBlocks()
