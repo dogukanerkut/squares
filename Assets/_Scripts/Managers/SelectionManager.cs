@@ -4,8 +4,8 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using System.Collections.Generic;
+using UnityEngine.Events;
 /// <summary>
 /// Referring To: BoardManager.cs(Singleton)
 /// Referenced From: EventController.cs
@@ -16,9 +16,9 @@ public class SelectionManager : MonoBehaviour
 {
 
 	// Use this for initialization
+	public UnityEvent GameOverEvent;
 	BlocksArray blocks;
 	ColorBase colorBase = new ColorBase();
-	BlocksCreator blocksCreator = new BlocksCreator();
 	List<BlockInfo> newBlocks = new List<BlockInfo>();
 
 	List<Block> blocksPlaced = new List<Block>();
@@ -96,6 +96,7 @@ public class SelectionManager : MonoBehaviour
 	/// </summary>
 	void CreateBlocks()
 	{
+		BlocksCreator blocksCreator = new BlocksCreator();
 		newBlocks.Clear();
 		newBlocks = blocksCreator.GetRandomBlocks();
 		colorBase.FillColorInfo(newBlocks);
@@ -114,8 +115,12 @@ public class SelectionManager : MonoBehaviour
 		for (int i = 0; i < Constants.ColumnCount; i++)
 		{
 			for (int j = 0; j < Constants.RowCount; j++)
+			{
 				blocks[j, i].GetComponent<Block>().Clear();
+				blocks[j, i].GetComponent<Block>().info.Clear();
+			}
 		}
+		CreateBlocks();
 	}
 
 	/// <summary>
@@ -125,7 +130,7 @@ public class SelectionManager : MonoBehaviour
 	public void StartSelection(Block selectedBlock)
 	{
 		//Checks if block is white
-		if (blocks.CheckIfBlockAvailable(selectedBlock.info))
+		if (blocks.CheckIfBlockAvailable(selectedBlock.info) && gameState == GameState.Idle)
 		{
 			gameState = GameState.SelectionStarted; //Start selection process
 			currentBlock = selectedBlock;
@@ -206,48 +211,28 @@ public class SelectionManager : MonoBehaviour
 					blocksPlaced[i].Clear();
 
 				SoundManager.Instance.PlayRetrieveBlock();
+				SoundManager.Instance.ResetPlaceBlockPitch();
+				gameState = GameState.Idle;
 			}
 			else // player placed all of given blocks to grid
 			{
 				SoundManager.Instance.ResetPlaceBlockPitch();
 				CreateBlocks(); // create new blocks to continue the game
 
-				//Start recursive function for every single block that has been placed this turn.
-				for (int i = 0; i < blocksPlaced.Count; i++)
+				if (blocks.CheckAdjacentBlocks(blocksPlaced)) // send placed block list for adjacency check and if there are any 3 or more adjacent block found
 				{
-					blocks.Check3Match(blocksPlaced[i].info);
-				}
-				//After recursive function does its job of obtaining and assigning all 3 or more adjacent-same-color blocks
-				//to a list seperately, check if that list contains any list(if any 3 or more adjacent-same-color blocks exist)
-				// if that's true clear all catched 3 or more adjacent-same-color blocks
-				if (blocks.IsBlockListHasBlocks())
-				{
-					List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists(); // retrieve matched block list
-					if (matchedBlocksList.Count == 1) // if no combo occurs
-						SoundManager.Instance.PlayBlockExplode();
-					else // if combo occurs
-						SoundManager.Instance.PlayBlockExplodeCombo();
-					foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
-					{
-						//score calculation goes here
-						//TODO: Score Calculation!
-						foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
-						{
-							adjacentBlock.Clear();
-							//score calculation goes here
-						}
-					}
-					blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
+					ExplodeBlocks();
 				}
 
 				// TODO:control of "if existing adjacent empty blocks' count is higher than newly introduced blocks' count" goes here
 				if (blocks.CheckEmptyBlocks(newBlocks.Count))
 				{
-					print("Empty blocks exist!");
+					gameState = GameState.Idle;
 				}
 				else
 				{
-					print("Game Over");
+					gameState = GameState.GameOver;
+					GameOverEvent.Invoke();
 					// TODO:if not then the game is over.
 				}
 
@@ -257,13 +242,38 @@ public class SelectionManager : MonoBehaviour
 			//and set the gamestate back to idle
 			selectionCount = 0;
 			blocksPlaced.Clear();
-			gameState = GameState.Idle;
 		}
+	}
+	private void ExplodeBlocks()
+	{
+		List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists(); // retrieve matched block list
+		if (matchedBlocksList.Count == 1) // if no combo occurs
+			SoundManager.Instance.PlayBlockExplode();
+		else // if combo occurs
+			SoundManager.Instance.PlayBlockExplodeCombo();
+
+		foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
+		{
+			//score calculation goes here
+			//TODO: Score Calculation!
+			foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
+			{
+				adjacentBlock.Clear(); // explode blocks(set their color to white etc.)
+				//score calculation goes here
+			}
+		}
+		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
 	}
 	public void ClearSelection()
 	{
 		currentBlock = null;
 		selectionCount = 0;
+	}
+
+	public void RestartGame() // called from game over game object event
+	{
+		ResetBoard();
+		gameState = GameState.Idle;
 	}
 
 

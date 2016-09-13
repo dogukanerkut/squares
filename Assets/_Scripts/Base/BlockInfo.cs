@@ -95,6 +95,12 @@ public class BlockInfo
 			isDeadEnd = value;
 		}
 	}
+	public void Clear()
+	{
+		isDeadEnd = false;
+		isChecked = false;
+
+	}
 
 
 }

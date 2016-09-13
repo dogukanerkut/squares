@@ -135,7 +135,7 @@ public class BlocksArray
 	private List<List<Block>> matchedBlockLists = new List<List<Block>>(); 
 	private int adjacencyIndex = 0;
 
-	public bool IsBlockListHasBlocks()
+	private bool IsBlockListHasBlocks()
 	{ return matchedBlockLists.Count > 0 ? true : false; }
 
 	public List<List<Block>> GetMatchedBlockLists()
@@ -144,28 +144,18 @@ public class BlocksArray
 	public void ClearMatchedBlockLists()
 	{ matchedBlockLists.Clear(); }
 
-	private enum Direction
+	/// <summary>
+	/// Starts recursive function for all added blocks and returns true if any equal or more than 3 adjacent-same-color blocks found.
+	/// </summary>
+	/// <param name="blocksPlaced">List of blocks that has been placed by player</param>
+	/// <returns></returns>
+	public bool CheckAdjacentBlocks(List<Block> blocksPlaced)
 	{
-		Right, Left, Down, Up
-	}
-	private BlockInfo CheckBlock(BlockInfo blockInfo, Direction dir)
-	{
-		int gridLimit = 0;
-		switch (dir)
-		{
-			case Direction.Right:
-				gridLimit = Constants.RowCount - 1;
-				break;
-			case Direction.Down:
-				gridLimit = Constants.ColumnCount - 1;
-				break;
-			default:
-				gridLimit = 0;//gridLimit is either left or up
-				break;
-		}
-
-
-		return null;
+		for (int i = 0; i < blocksPlaced.Count; i++)
+			Check3Match(blocksPlaced[i].info);//Start recursive function for every single block that has been placed this turn.
+											  //After recursive function does its job of obtaining and assigning all 3 or more adjacent-same-color blocks
+											  //to a list seperately, check if that list contains any list(if any 3 or more adjacent-same-color blocks exist)
+		return IsBlockListHasBlocks();
 	}
 
 	/// <summary>
@@ -174,7 +164,7 @@ public class BlocksArray
 	/// <param name="blockInfo">A single block to start adjacency control process.</param>
 	/// <param name="isWhiteBlockCheck">If the intention is to check for empty blocks(to see there are any space left to place new blocks).</param>
 	/// <param name="adjacentBlockCount">Number of adjacent empty block is needed in order to place all new blocks.</param>
-	public void Check3Match(BlockInfo blockInfo, bool isWhiteBlockCheck = false, int adjacentBlockCount = 3) // default game rule is to find 3 or more blocks
+	private void Check3Match(BlockInfo blockInfo, bool isWhiteBlockCheck = false, int adjacentBlockCount = 3) // default game rule is to find 3 or more blocks
 	{
 		Color blockColor = blockInfo.BlockColor;
 		//only add this block if it's not checked
@@ -239,13 +229,11 @@ public class BlocksArray
 
 				// transfer them to main list for selectionManager to destroy them all.
 				matchedBlockLists.Add(adjacentBlockComponents); 
-				//PrepareForNextIteration(); // this clears all temporary lists and index
 			}
 			else // if there are no more blocks to check and collected adjacent blocks are less than 3
 			{
 				if (!isWhiteBlockCheck) // only clear checked flags if it's not empty block check because we will clear flags when all checks ended for optimization
 					ClearIsCheckedFlags(adjacentBlocksWithSameColor); // clears isChecked flags
-				//PrepareForNextIteration();// this clears all temporary lists and index
 			}
 		}
 		else //if any adjacent same color blocks not found
@@ -302,15 +290,13 @@ public class BlocksArray
 			//our matchedBlockLists should be filled with atleast one block of adjacent white blocks
 			//so check if their count is bigger or equal than our newBlockCount
 			//note that this check only works if our newBlockCount smaller than 4(because different condition appears after 4, see encapsulated comment for more info)
-			//if (newBlocksCount < 4)
-			//{
 			if (matchedBlockLists != null)
 			{
 				foreach (List<Block> adjacentBlockList in matchedBlockLists)
 				{
 					int additionalCount = newBlocksCount >= 4 ? 2 : 0; // if we have 4 or more new blocks to be placed, we need to add 2...
 					#region Comment encapsulated because of length[reasoning explanation]
-					// because safest way to be sure is to have atleast 6 adjacent empty blocks to place 4 blocks. See example below.
+					//because safest way to be sure is to have atleast 6 adjacent empty blocks to place 4 blocks. See example below.
 					//Consider & as previously placed blocks(blocks with colors) and * as empty blocks(white blocks)
 					//And consider that player received 4 blocks to put
 					// & & & * &
@@ -318,8 +304,9 @@ public class BlocksArray
 					// & & & * &
 					// & & & * & 
 					// & & & & &
-					// only way to be sure that player can put his blocks is to have 6 empty adjacent blocks.
-					// if we don't have 6 adjacent empty blocks we will need another approach to solve this problem.
+					//only way to be sure that player can put his blocks is to have 6 empty adjacent blocks.
+					//if we don't have 6 adjacent empty blocks we will need another approach to solve this problem.
+					//that approach is explained in AdvancedEmptyBlockCheck method.
 					#endregion
 
 					if (adjacentBlockList.Count >= newBlocksCount + additionalCount) // if there are enough empty blocks for user to place new blocks
@@ -330,48 +317,33 @@ public class BlocksArray
 					}
 				}
 			}
-			//}
-			// if our block count is equal or bigger than 4 we need to take a completely different approach, see example below
-			
-			//else if (newBlocksCount >= 4) 
-			//{
-			//	foreach (List<Block> adjacentBlock in matchedBlockLists)
-			//	{
-			//		if (adjacentBlock.Count <= newBlocksCount) // if there are enough empty blocks for user to place new blocks
-			//		{
-			//			rBool = true; //new blocks can be placed to grid
-			//			break; // leave for loop and return the value
-			//		}
-			//	}
-			//}
-
 		}
 		//so far we are ok as long as we get less than 4 blocks, we can control our grid properly by using our Check3Match method to see adjacent empty blocks
 		//but if we get 4 blocks, there is a certain pattern that there is 4 adjacent empty blocks exist(which our code can detect) but we can't place our 4 blocks
-		//in this pattern, consider folloing example.
+		//in this pattern, consider following example.
 		#region Comment encapsulated because of length[example]
 		//Consider & as previously placed blocks(blocks with colors) and * as empty blocks(white blocks)
 		//And consider that player received 4 blocks to put
-		// & & & * &
-		// & & * * *
-		// & & & & &
-		// & & & & &
-		// & & & & &
-		//In this case there are 4 adjacent empty blocks but player can't place 4 blocks here.
+		//& & & * &
+		//& & * * *
+		//& & & & &
+		//& & & & &
+		//& & & & &
+		//In this case there are 4 adjacent empty blocks(that our code detects) but player can't place 4 blocks(that our code can't detect!) here.
 		//-------------------------
-		// & & & * &
-		// & & * * *
-		// & & & * &
-		// & & & & & 
-		// & & & & &
+		//& & & * &
+		//& & * * *
+		//& & & * &
+		//& & & & & 
+		//& & & & &
 		//In this case there are 5 adjacent empty blocks but player still can't place 4 blocks. So a quick way around won't solve our problem
-		//Therefore we need a different approach
+		//Therefore we need a different approach and that approach is AdvancedEmptyBlockCheck
 		#endregion
-
-		if (!rBool && newBlocksCount >= 4) // if no empty space found and new blocks are equal or bigger than 4
+		if (!rBool && newBlocksCount >= 4) //only do this if rBool is not true and our newBlocksCount is bigger than 4
 		{
 			if (matchedBlockLists != null)
 			{
+				//Send every block info in every block list to check their patterns
 				foreach (List<Block> adjacentBlockList in matchedBlockLists)
 				{
 					if (rBool)
@@ -379,7 +351,7 @@ public class BlocksArray
 					foreach (Block adjacentBlock in adjacentBlockList)
 					{
 						AdvancedEmptyBlockCheck(adjacentBlock.GetComponent<Block>().info, newBlocksCount);
-						if (emptySpaceAvailable)
+						if (emptySpaceAvailable) //this is modified within AdvancedEmptyBlockCheck
 						{
 							rBool = true;
 							emptySpaceAvailable = false;
@@ -396,6 +368,7 @@ public class BlocksArray
 		PrepareForNextIteration();
 		return rBool;
 	}
+
 
 	int nothingAddedCount = 0; // if nothing is added to our adjacentBlocksWithSameColor list for 2 times we terminate recursive method.
 	bool emptySpaceAvailable = false; // this bool needs to be global in order for CheckEmptyBlocks to see if this method found any pattern that 4 blocks can be placed into.
@@ -414,7 +387,12 @@ public class BlocksArray
 	//And therefore game will stuck at that point. That's why we need a different approach on detecting available empty blocks
 	//This approach takes one block as "reference point" and seeks a single path from that point. Every time code comes to "dead end"
 	//It turns to the last point where it left and looks for another path, this way it can detect that player can't place blocks in previous example
-	public void AdvancedEmptyBlockCheck(BlockInfo blockInfo, int newBlocksCount)
+	/// <summary>
+	/// Check if we can put our newBlocks to our adjacent empty blocks
+	/// </summary>
+	/// <param name="blockInfo">"Reference point" that code will look a path from.</param>
+	/// <param name="newBlocksCount">Number of new blocks we have</param>
+	private void AdvancedEmptyBlockCheck(BlockInfo blockInfo, int newBlocksCount)
 	{
 		Color blockColor = blockInfo.BlockColor;
 		if (!adjacentBlocksWithSameColor.Contains(blockInfo))
@@ -425,7 +403,7 @@ public class BlocksArray
 		if (blockInfo.Row != Constants.RowCount - 1 && !isSingleBlockAdded)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row + 1, blockInfo.Column);
-			if (blockColor == checkBlock.BlockColor && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd) //adjacent block should be same color as ours and should not be checked before.
+			if (blockColor == checkBlock.BlockColor && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd) //only add it if its same color && it doesn't included in list already && it is not a deadend
 			{
 				adjacentBlocksWithSameColor.Add(checkBlock); // add it to our array
 				isSingleBlockAdded = true;
