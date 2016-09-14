@@ -16,40 +16,45 @@ public class SelectionManager : MonoBehaviour
 {
 
 	// Use this for initialization
-	public UnityEvent GameOverEvent;
+
 	public BlocksArray blocks;
 	ColorBase colorBase = new ColorBase();
 	List<BlockInfo> newBlocks = new List<BlockInfo>();
+	List<BlockInfo> hintBlocks = new List<BlockInfo>();
 
 	List<Block> blocksPlaced = new List<Block>();
 
 	Block currentBlock;
 	Block previousBlock;
 	private int selectionCount = 0;
-	private GameState gameState;
-	public GameState CurGameState
-	{ get { return gameState; } }
+	public static GameState gameState;
 
 	public GameObject blockPrefab;
 	public RectTransform gamePanel;
 	public RectTransform newBlocksPanel;
+	public RectTransform hintBlocksPanel;
+	private Image[] hintBlockImages;
+	private bool isHintUsed;
 	public Text scoreText;
 	private int score;
 	private int updatedScore;
 	private Image[] newBlockImages;
-	
+
+	public UnityEvent gameOverEvent;
+	public UnityEvent hammerUsedEvent;
 	void Awake()
 	{
 		newBlockImages = newBlocksPanel.GetComponentsInChildren<Image>();
+		hintBlockImages = hintBlocksPanel.GetComponentsInChildren<Image>();
+		//disable all hintBlockImages when game starts
+		foreach (Image img in hintBlockImages)
+		{
+			img.gameObject.SetActive(false);
+		}
 		gameState = GameState.Idle;
 		GenerateBoard();
 		GridLayoutGroup gamePanelGLG = gamePanel.GetComponent<GridLayoutGroup>();
 		gamePanelGLG.constraintCount = Constants.RowCount; // if grid size is changed, adjust constrain count accordingly
-	}
-
-	void Start ()
-	{
-		
 	}
 
 	/// <summary>
@@ -72,52 +77,87 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Block>().FillInfo(j, i, Color.white); //Set object's row and column
 			}
 		}
-	//	blocks[0, 3].GetComponent<Block>().SetColor(Color.white);
-	//	//blocks[0, 2].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[1, 3].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[1, 2].GetComponent<Block>().SetColor(Color.white);
-	////	blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
-	////blocks[0,2].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[2, 0].GetComponent<Block>().SetColor(Color.white);
-	//	//blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
-	//	//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[4, 0].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[4, 1].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[4, 2].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[4, 3].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[4, 4].GetComponent<Block>().SetColor(Color.white);
-	////	blocks[1, 1].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[1, 4].GetComponent<Block>().SetColor(Color.white);
-	//	blocks[2, 3].GetComponent<Block>().SetColor(Color.white);
-	//	//blocks[3, 3].GetComponent<Block>().SetColor(Color.white);
-		CreateBlocks();
+		CreateBlocks(CreationType.Actual);
 
 	}
-	//private Color RandomColor()
-	//{
-	//	return new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-	//}
+	private enum CreationType
+	{ Actual, Hint }
 	/// <summary>
 	/// Create new blocks, assign their colors and arrange the new block images.
 	/// </summary>
-	void CreateBlocks()
+	/// <param name="type">Actual creates new blocks, Hint creates Hint blocks</param>
+	void CreateBlocks(CreationType type)
 	{
-		BlocksCreator blocksCreator = new BlocksCreator();
-		newBlocks.Clear();
-		newBlocks = blocksCreator.GetRandomBlocks();
-		colorBase.FillColorInfo(newBlocks);
-		for (int i = 0; i < newBlockImages.Length; i++)
-			newBlockImages[i].gameObject.SetActive(false);
-
-		for (int i = 0; i < newBlocks.Count; i++)
+		List<BlockInfo> blocksInfo = new List<BlockInfo>();
+		Image[] blockImages = new Image[0];
+		switch (type) //select which blocks to process
 		{
-			newBlockImages[i].gameObject.SetActive(true);
-			newBlockImages[i].color = newBlocks[i].BlockColor;
+			case CreationType.Actual:
+				blocksInfo = newBlocks;
+				blockImages = newBlockImages;
+				break;
+			case CreationType.Hint:
+				blocksInfo = hintBlocks;
+				blockImages = hintBlockImages;
+				break;
+			default:
+				break;
+		}
+		BlocksCreator blocksCreator = new BlocksCreator();
+		if (isHintUsed) //transfer hintblocks to new blocks
+		{
+			blocksInfo = new List<BlockInfo>(hintBlocks); // create it as new list so we don't reference the hintBlocks and can reset it
+			hintBlocks.Clear();
+			hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks); // we don't need hintblocks so disable their image
+			isHintUsed = false;
+		}
+		else // create random new blocks  here
+		{
+			blocksInfo.Clear();
+			blocksInfo = blocksCreator.GetRandomBlocks(); // bring new blocks random blocks
+			colorBase.FillColorInfo(blocksInfo); // color newly introduced blocks randomly
+		}
+		blockImages = ProcessBlocks(blockImages, blocksInfo);
+		switch (type) // push processed blocks back to global holders.
+		{
+			case CreationType.Actual:
+				newBlocks = blocksInfo;
+				newBlockImages = blockImages;
+				break;
+			case CreationType.Hint:
+				hintBlocks = blocksInfo;
+				hintBlockImages = blockImages;
+				break;
+			default:
+				break;
 		}
 
 	}
-	void ResetBoard()
+	/// <summary>
+	/// Update images' colors with given blocksInfo
+	/// </summary>
+	/// <param name="blockImages">block image list to be processed</param>
+	/// <param name="blocksInfo">blocksInfo to fill color of images</param>
+	/// <returns></returns>
+	Image[] ProcessBlocks(Image[] blockImages, List<BlockInfo> blocksInfo)
 	{
+		for (int i = 0; i < blockImages.Length; i++)
+			blockImages[i].gameObject.SetActive(false);
+
+		for (int i = 0; i < blocksInfo.Count; i++)
+		{
+			blockImages[i].gameObject.SetActive(true);
+			blockImages[i].color = blocksInfo[i].BlockColor;
+		}
+		return blockImages;
+	}
+
+	/// <summary>
+	/// Resets the board for new game
+	/// </summary>
+	public void ResetBoard() // used from GameOverPanel(Game object in hierarchy)
+	{
+		gameState = GameState.Idle;
 		for (int i = 0; i < Constants.ColumnCount; i++)
 		{
 			for (int j = 0; j < Constants.RowCount; j++)
@@ -126,9 +166,10 @@ public class SelectionManager : MonoBehaviour
 				blocks[j, i].GetComponent<Block>().info.Clear();
 			}
 		}
-		CreateBlocks();
+		CreateBlocks(CreationType.Actual);
 	}
 
+	#region This block consists of code to detect when player touches blocks, drags within them and releases finger
 	/// <summary>
 	/// When player first touches a block, Update touched block and start touching process.
 	/// </summary>
@@ -145,6 +186,9 @@ public class SelectionManager : MonoBehaviour
 			UpdateSelectedBlock(selectedBlock);
 			SoundManager.Instance.PlayPlaceBlock();
 		}
+		//if game state is hammer power up and the touched block is a colored one.
+		else if(!blocks.CheckIfBlockAvailable(selectedBlock.info) && gameState == GameState.HammerPowerUp)
+			RemoveBlock(selectedBlock);
 	}
 
 	/// <summary>
@@ -156,6 +200,18 @@ public class SelectionManager : MonoBehaviour
 		selectedBlock.SetColor(newBlocks[selectionCount].BlockColor);//Set color of selected block to queued new block
 		blocksPlaced.Add(selectedBlock); // add currently selected block to the list of placed blocks(we will need it later)
 		selectionCount++; // increase the selection count so next time the queued block will be placed
+	}
+
+	/// <summary>
+	/// Remove a single block from the grid.
+	/// </summary>
+	/// <param name="selectedBlock">Block to be removed.</param>
+	private void RemoveBlock(Block selectedBlock)
+	{
+		selectedBlock.Clear(); // remove it's colors
+		SoundManager.Instance.PlayHammerPowerUp();
+		gameState = GameState.Idle;
+		hammerUsedEvent.Invoke();
 	}
 
 	/// <summary>
@@ -201,10 +257,12 @@ public class SelectionManager : MonoBehaviour
 
 		}
 	}
+
 	/// <summary>
 	/// <para>This code runs when player releases finger.</para>
 	/// <para>If player wants to terminate the selection(either by trying to place all queued new blocks or simply revert it's selection.</para>
-	/// <para>If player places blocks, check for adjacency, if any 3 or more same color adjacent blocks found, destroy them.</para>
+	/// <para>If player places blocks, check for adjacency, if any 3 or more same color adjacent blocks found, destroy them and create new blocks.</para>
+	/// <para>Check the board after player placed blocks. If there are no more place left , game is over.</para>
 	/// </summary>
 	public void TerminateSelection()
 	{
@@ -223,22 +281,17 @@ public class SelectionManager : MonoBehaviour
 			else // player placed all of given blocks to grid
 			{
 				SoundManager.Instance.ResetPlaceBlockPitch();
-				CreateBlocks(); // create new blocks to continue the game
+				CreateBlocks(CreationType.Actual); // create new blocks to continue the game
 
 				if (blocks.CheckAdjacentBlocks(blocksPlaced)) // send placed block list for adjacency check and if there are any 3 or more adjacent block found
-				{
-					ExplodeBlocks();
-				}
+					ExplodeBlocks(); // explode blocks if there are any
 
-				// if there are any place for our newblock to be placed
 				if (blocks.CheckEmptyBlocks(newBlocks.Count))
-				{
 					gameState = GameState.Idle;
-				}
 				else // game over here
 				{
 					gameState = GameState.GameOver;
-					GameOverEvent.Invoke();
+					gameOverEvent.Invoke();
 				}
 
 			}
@@ -249,6 +302,10 @@ public class SelectionManager : MonoBehaviour
 			blocksPlaced.Clear();
 		}
 	}
+
+	/// <summary>
+	/// Removes adjacent blocks, calculates score.
+	/// </summary>
 	private void ExplodeBlocks()
 	{
 		List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists(); // retrieve matched block list
@@ -262,6 +319,10 @@ public class SelectionManager : MonoBehaviour
 		int totalScore = 0;
 		foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
 		{
+			//Score system is: a single block will yield total number of same-color adjacent blocks
+			//and if there is combo occurs, double the points given.
+			//For example 3 red blocks yield 3*3 = 9 points(3 points per block)
+			//3 red blocks and 4 yellow blocks yield (3*3*2)+(4*4*2) = 50 points. Nnumber 2 is because there is two different same-color adjacent blocks
 			score = adjacentBlocksWithSameColor.Count * scoreMultiplier; // score per block
 			totalScore += adjacentBlocksWithSameColor.Count * score; //score for total blocks added
 			foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
@@ -274,7 +335,10 @@ public class SelectionManager : MonoBehaviour
 		updatedScore += totalScore;
 		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
 	}
+	#endregion
+
 	private bool isScoreIncreased;
+
 	/// <summary>
 	/// Starts floating text animation for every block that is going to be exploded.
 	/// </summary>
@@ -295,12 +359,49 @@ public class SelectionManager : MonoBehaviour
 		selectionCount = 0;
 	}
 
-	public void RestartGame() // called from game over game object event
+	#region PowerUp Section
+	public void HammerPowerUp()// called from Hammer Button
 	{
-		ResetBoard();
-		gameState = GameState.Idle;
+		//only enable hammer power up button to be clicked if there are any colored blocks exist in grid
+		if (IsAnyColoredBlockExist())
+			gameState = GameState.HammerPowerUp;
+
 	}
 
+	public void HintPowerUp()// called from Hint Button
+	{
+		CreateBlocks(CreationType.Hint);
+		isHintUsed = true;
+	}
+
+	public void SkipPowerUp()// called from Skip Button
+	{
+		CreateBlocks(CreationType.Actual);
+	}
+
+	/// <summary>
+	/// Checks whole grid to see if there are any colored block exists, terminates check immeditely when it founds a colored block
+	/// </summary>
+	/// <returns></returns>
+	private bool IsAnyColoredBlockExist()
+	{
+		bool rBool = false;
+		for (int i = 0; i < Constants.ColumnCount; i++)
+		{
+			if (rBool)
+				break;
+			for (int j = 0; j < Constants.RowCount; j++)
+			{
+				if (blocks[j, i].GetComponent<Block>().info.BlockColor != Color.white) // if color of block is not white
+				{
+					rBool = true;
+					break;
+				}
+			}
+		}
+		return rBool;
+	}
+	#endregion
 
 	void Update()
 	{
@@ -313,38 +414,4 @@ public class SelectionManager : MonoBehaviour
 				isScoreIncreased = false;
 		}
 	}
-	//List<RaycastResult> results = new List<RaycastResult>();
-//	void Update ()
-//	{
-//#if UNITY_EDITOR
-//		if (gameState == GameState.Idle)
-//		{
-//			//if (Input.GetKey(KeyCode.Mouse0))
-//			//{
-//			//	//Code to be place in a MonoBehaviour with a GraphicRaycaster component
-//			//	GraphicRaycaster gr = GameObject.Find("GameBoardCanvas").GetComponent<GraphicRaycaster>();
-//			//	//Create the PointerEventData with null for the EventSystem
-//			//	PointerEventData ped = new PointerEventData(null);
-//			//	//Set required parameters, in this case, mouse position
-//			//	ped.position = Input.mousePosition;
-//			//	//Create list to receive all results
-				
-//			//	//Raycast it
-//			//	gr.Raycast(ped, results);
-
-//   //         }
-//			//else if(Input.GetKeyUp(KeyCode.Mouse0))
-//			//{
-//			//	foreach (var item in results)
-//			//	{
-//			//		print(item.gameObject.name);
-//			//	}
-//			//}
-
-			
-//        }
-
-//		#endif
-
-//	}
 }

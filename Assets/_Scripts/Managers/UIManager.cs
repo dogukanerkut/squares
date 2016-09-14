@@ -16,6 +16,12 @@ public class UIManager : MonoBehaviour
 	public GameObject gameOverPanel;
 	public SelectionManager selectionManager;
 	public Transform gameBoardCanvas;
+
+	//hammer bonus related
+	public Transform hammerTransform;
+	public Sprite hammerSprite;
+	public Sprite hammerSpritePressed;
+	private bool isHammerPressed;
 	// Use this for initialization
 	public void GameOver()
 	{
@@ -25,5 +31,22 @@ public class UIManager : MonoBehaviour
 	{
 		gameOverPanel.SetActive(false);
 	}
-	// Update is called once per frame
+
+	public void HammerPressed()
+	{
+		if (!isHammerPressed && SelectionManager.gameState == GameState.HammerPowerUp)
+		{
+			isHammerPressed = true;
+			Animator anim = hammerTransform.GetComponent<Animator>();
+			anim.SetBool("isPressed", true);
+		//	hammerButton.image.sprite = hammerSpritePressed;
+		}
+		
+	}
+	public void HammerUsed() //callback from BlockManager's hammerUsedEvent
+	{
+		isHammerPressed = false;
+		Animator anim = hammerTransform.GetComponent<Animator>();
+		anim.SetBool("isPressed", false);
+	}
 }

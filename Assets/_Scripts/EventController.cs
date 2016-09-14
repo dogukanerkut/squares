@@ -20,7 +20,7 @@ public class EventController : MonoBehaviour
 
 	public void OnPointerEnter()
 	{
-		if (selectionManager.CurGameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
+		if (SelectionManager.gameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
 		{
 			Block selectedBlock = GetComponent<Block>();
 
