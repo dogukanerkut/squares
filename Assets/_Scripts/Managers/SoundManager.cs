@@ -34,7 +34,7 @@ public class SoundManager : MonoBehaviour {
 	public AudioSource gameOver;
 	public AudioSource buttonClick;
 	public AudioSource hammerPowerUp;
-
+	public AudioSource hintPowerUp;
 	private void IncreasePlaceBlockPitch()
 	{
 		placeBlock.pitch += placeBlockPitchRate;
@@ -76,5 +76,9 @@ public class SoundManager : MonoBehaviour {
 	public void PlayHammerPowerUp()
 	{
 		hammerPowerUp.Play();
+	}
+	public void PlayHintPowerUp()
+	{
+		hintPowerUp.Play();
 	}
 }

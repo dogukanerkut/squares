@@ -167,6 +167,8 @@ public class SelectionManager : MonoBehaviour
 			}
 		}
 		CreateBlocks(CreationType.Actual);
+		score = 0;
+		updatedScore = 0;
 	}
 
 	#region This block consists of code to detect when player touches blocks, drags within them and releases finger
@@ -292,6 +294,7 @@ public class SelectionManager : MonoBehaviour
 				{
 					gameState = GameState.GameOver;
 					gameOverEvent.Invoke();
+					SoundManager.Instance.PlayGameOver();
 				}
 
 			}
@@ -363,20 +366,27 @@ public class SelectionManager : MonoBehaviour
 	public void HammerPowerUp()// called from Hammer Button
 	{
 		//only enable hammer power up button to be clicked if there are any colored blocks exist in grid
-		if (IsAnyColoredBlockExist())
-			gameState = GameState.HammerPowerUp;
+		if (gameState == GameState.Idle)
+		{
+			if (IsAnyColoredBlockExist())
+				gameState = GameState.HammerPowerUp;
+		}
 
 	}
 
 	public void HintPowerUp()// called from Hint Button
 	{
+		if (gameState == GameState.Idle)
+		{
 		CreateBlocks(CreationType.Hint);
 		isHintUsed = true;
+		}
 	}
 
 	public void SkipPowerUp()// called from Skip Button
 	{
-		CreateBlocks(CreationType.Actual);
+		if (gameState == GameState.Idle)
+			CreateBlocks(CreationType.Actual);
 	}
 
 	/// <summary>
