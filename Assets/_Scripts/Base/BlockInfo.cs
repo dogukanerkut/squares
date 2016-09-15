@@ -9,19 +9,20 @@ using System.Collections;
 /// Attached To: 
 /// Description: Base class for holding primitive block data.
 /// </summary>
+[System.Serializable]
 public class BlockInfo
 {
 	public BlockInfo()
 	{
 		Row = -1;
 		Column = -1;
-		blockColor = ColorBase.defaultColor;
+		blockColor = new SerializableColor(ColorBase.defaultColor);
 	}
 	public BlockInfo(int _row, int _column, Color _color)
 	{
 		Row = _row;
 		Column = _column;
-		BlockColor = _color;
+		BlockColor = new SerializableColor(_color);
 	}
 	private int column;
 	public int Column
@@ -50,8 +51,8 @@ public class BlockInfo
 			row = value;
 		}
 	}
-	private Color blockColor;
-	public Color BlockColor
+	private SerializableColor blockColor;
+	public SerializableColor BlockColor
 	{
 		get
 		{
@@ -60,7 +61,7 @@ public class BlockInfo
 
 		set
 		{
-			blockColor = value;
+			blockColor =value;
 		}
 	}
 	/// <summary>

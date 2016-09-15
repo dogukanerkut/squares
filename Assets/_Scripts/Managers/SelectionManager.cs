@@ -35,7 +35,9 @@ public class SelectionManager : MonoBehaviour
 	List<BlockInfo> newBlocks = new List<BlockInfo>();
 	//Score Variables
 	public Text scoreText;
+	public Text highScoreText;
 	private int score;
+	private int highScore;
 	private int updatedScore;
 	private bool isScoreIncreased;
 	//Hint Blocks Variables
@@ -76,6 +78,51 @@ public class SelectionManager : MonoBehaviour
 		gamePanelGLG.constraintCount = Constants.RowCount; // if grid size is changed, adjust constrain count accordingly
 	}
 
+	#region Save & Load Operations-------------------------------------------------------------------------------------------------------------------------------
+	public void FillBlocksArray(BlocksArray loadedBlocks, List<BlockInfo> currentBlockInfos)
+	{
+		if (loadedBlocks != null)
+			blocks = loadedBlocks;
+		if (currentBlockInfos != null)
+			CreateNewBlocksFromSave(currentBlockInfos);
+	}
+	public List<BlockInfo> GetBlocks(BlockCreationType type)
+	{
+		List<BlockInfo> blocks = new List<BlockInfo>();
+		switch (type)
+		{
+			case BlockCreationType.Actual:
+				blocks = newBlocks;
+				break;
+			case BlockCreationType.Hint:
+				blocks = hintBlocks;
+				break;
+			default:
+				break;
+		}
+		return blocks;
+	}
+	public BlocksArray GetBlocksArray() { return blocks; }
+
+	public GameVariables GetGameVariables()
+	{
+		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true: false;
+		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, isHammerUsed, isHintUsed);
+	}
+
+	public void SetGameVariables(GameVariables gameVariables)
+	{
+		SetScore(gameVariables.score, false);
+		UpdateHighScore(gameVariables.highScore);
+		difficultyCounter = gameVariables.difficultyCounter;
+		currentDifficultyBracket = gameVariables.currentDifficultyBracket;
+		if (gameVariables.isHammerUsed)
+			HammerPowerUp();
+		isHintUsed = gameVariables.isHintUsed;
+		colorBase.IncreaseDifficulty(currentDifficultyBracket);
+
+	}
+	#endregion
 	/// <summary>
 	/// Generates a Board with prearranged Row and Column count(See Constants class) and assigns them to [blocks] 2D array.
 	/// </summary>
@@ -96,10 +143,25 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Block>().FillInfo(j, i, ColorBase.defaultColor); //Set object's row and column
 			}
 		}
-		CreateBlocks(CreationType.Actual);
-
+		//blocks[1, 1].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[2, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[2, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[3, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[2, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[2, 1].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[0, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[0, 1].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[0, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[0, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		CreateBlocks(BlockCreationType.Actual);
 	}
-
+	//Color RandomColor()
+	//{
+	//	return new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+	//}
 	/// <summary>
 	/// Resets the board for new game
 	/// </summary>
@@ -114,28 +176,29 @@ public class SelectionManager : MonoBehaviour
 				blocks[j, i].GetComponent<Block>().info.Clear();
 			}
 		}
-		SetScore(0, false); // set score to 0
+		UpdateHighScore(); // update highscore
+		SetScore(0, false); // save if highscore and set score to 0
 		ResetDifficulty(); // resets difficulty
-		CreateBlocks(CreationType.Actual); // create new blocks
+		CreateBlocks(BlockCreationType.Actual); // create new blocks
 	}
 
-	private enum CreationType
+	public enum BlockCreationType
 	{ Actual, Hint }
 	/// <summary>
 	/// Create new blocks, assign their colors and arrange the new block images.
 	/// </summary>
 	/// <param name="type">Actual creates new blocks, Hint creates Hint blocks</param>
-	void CreateBlocks(CreationType type)
+	void CreateBlocks(BlockCreationType type)
 	{
 		List<BlockInfo> blocksInfo = new List<BlockInfo>();
 		Image[] blockImages = new Image[0];
 		switch (type) //select which blocks to process
 		{
-			case CreationType.Actual:
+			case BlockCreationType.Actual:
 				blocksInfo = newBlocks;
 				blockImages = newBlockImages;
 				break;
-			case CreationType.Hint:
+			case BlockCreationType.Hint:
 				blocksInfo = hintBlocks;
 				blockImages = hintBlockImages;
 				break;
@@ -159,11 +222,11 @@ public class SelectionManager : MonoBehaviour
 		blockImages = ProcessBlocks(blockImages, blocksInfo);
 		switch (type) // push processed blocks back to global holders.
 		{
-			case CreationType.Actual:
+			case BlockCreationType.Actual:
 				newBlocks = blocksInfo;
 				newBlockImages = blockImages;
 				break;
-			case CreationType.Hint:
+			case BlockCreationType.Hint:
 				hintBlocks = blocksInfo;
 				hintBlockImages = blockImages;
 				break;
@@ -171,6 +234,16 @@ public class SelectionManager : MonoBehaviour
 				break;
 		}
 
+	}
+	private void CreateNewBlocksFromSave(List<BlockInfo> blockInfos)
+	{
+		newBlocks = blockInfos;
+		newBlockImages = ProcessBlocks(newBlockImages, newBlocks);
+	}
+	public void CreateHintBlocksFromSave(List<BlockInfo> blockInfos)
+	{
+		hintBlocks = blockInfos;
+		hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks);
 	}
 	/// <summary>
 	/// Update images' colors with given blocksInfo
@@ -185,7 +258,7 @@ public class SelectionManager : MonoBehaviour
 		for (int i = 0; i < blocksInfo.Count; i++)
 		{
 			blockImages[i].gameObject.SetActive(true);
-			blockImages[i].color = blocksInfo[i].BlockColor;
+			blockImages[i].color = blocksInfo[i].BlockColor.GetColor();
 		}
 		return blockImages;
 	}
@@ -218,7 +291,7 @@ public class SelectionManager : MonoBehaviour
 	/// <param name="selectedBlock"></param>
 	private void UpdateSelectedBlock(Block selectedBlock)
 	{
-		selectedBlock.SetColor(newBlocks[selectionCount].BlockColor);//Set color of selected block to queued new block
+		selectedBlock.SetColor(newBlocks[selectionCount].BlockColor.GetColor());//Set color of selected block to queued new block
 		blocksPlaced.Add(selectedBlock); // add currently selected block to the list of placed blocks(we will need it later)
 		selectionCount++; // increase the selection count so next time the queued block will be placed
 	}
@@ -309,7 +382,7 @@ public class SelectionManager : MonoBehaviour
 					ExplodeBlocks(); // explode blocks if there are any
 				}
 
-				CreateBlocks(CreationType.Actual); // create new blocks to continue the game
+				CreateBlocks(BlockCreationType.Actual); // create new blocks to continue the game
 
 				if (blocks.CheckEmptyBlocks(newBlocks.Count)) // Use this method after creating blocks!
 					gameState = GameState.Idle;
@@ -403,7 +476,7 @@ public class SelectionManager : MonoBehaviour
 	{
 		Animator an = block.GetComponentInChildren<Animator>();
 		Text tx = block.GetComponentInChildren<Text>();
-		tx.color = block.info.BlockColor;
+		tx.color = block.info.BlockColor.GetColor();
 		tx.text = "+" + points.ToString();
 		an.SetTrigger("startFloat");
 	}
@@ -423,7 +496,7 @@ public class SelectionManager : MonoBehaviour
 	{
 		if (gameState == GameState.Idle)
 		{
-		CreateBlocks(CreationType.Hint);
+		CreateBlocks(BlockCreationType.Hint);
 		isHintUsed = true;
 		}
 	}
@@ -431,7 +504,7 @@ public class SelectionManager : MonoBehaviour
 	public void SkipPowerUp()// called from Skip Button
 	{
 		if (gameState == GameState.Idle)
-			CreateBlocks(CreationType.Actual);
+			CreateBlocks(BlockCreationType.Actual);
 	}
 	/// <summary>
 	/// Checks whole grid to see if there are any colored block exists, terminates check immeditely when it founds a colored block
@@ -446,7 +519,7 @@ public class SelectionManager : MonoBehaviour
 				break;
 			for (int j = 0; j < Constants.RowCount; j++)
 			{
-				if (blocks[j, i].GetComponent<Block>().info.BlockColor != ColorBase.defaultColor) // if color of block is not white
+				if (blocks[j, i].GetComponent<Block>().info.BlockColor.GetColor() != ColorBase.defaultColor) // if color of block is not white
 				{
 					rBool = true;
 					break;
@@ -485,6 +558,23 @@ public class SelectionManager : MonoBehaviour
 	private void AddToScore(int addition)
 	{
 		SetScore(updatedScore + addition, true);
+
+	}
+	private void UpdateHighScore(int optionalScore = -1)
+	{
+		if (optionalScore == -1)
+		{
+			if (updatedScore > highScore)
+			{
+				highScore = updatedScore;
+			
+			}
+		}
+		else
+			highScore = optionalScore;
+
+		highScoreText.text = highScore.ToString();
+
 	}
 	#endregion
 

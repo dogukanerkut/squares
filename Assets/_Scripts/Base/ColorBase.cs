@@ -25,7 +25,8 @@ public class ColorBase
 	public void ResetToDefault()
 	{
 		currentColors.Clear();
-		currentColors.Add(ConvertTo1(179, 255, 135)); // green
+		//currentColors.Add(ConvertTo1(179, 255, 135)); // green
+		currentColors.Add(Color.green);
 		currentColors.Add(ConvertTo1(116, 255, 255)); // blue
 		currentColors.Add(ConvertTo1(127, 54, 255)); // purple
 
@@ -45,12 +46,17 @@ public class ColorBase
 			difficultyColors.RemoveAt(0);
 		}
 	}
+	public void IncreaseDifficulty(int difficultyBracket)
+	{
+		for (int i = 0; i < difficultyBracket; i++)
+			IncreaseDifficulty();
+	}
 
 	public void FillColorInfo(List<BlockInfo> blockInfos)
 	{
 		for (int i = 0; i < blockInfos.Count; i++)
 		{
-			blockInfos[i].BlockColor = GetRandomColor();
+			blockInfos[i].BlockColor = new SerializableColor(GetRandomColor());
 		}
 		//return blockInfos;
 	}

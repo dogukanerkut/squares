@@ -12,7 +12,6 @@ using UnityEngine.UI;
 
 public class Block : MonoBehaviour {
 	public BlockInfo info;
-
 	private Image blockImg;
 
 	void Awake ()
@@ -27,12 +26,12 @@ public class Block : MonoBehaviour {
 	}
 	public void SetColor(Color clr)
 	{
-		info.BlockColor = clr;
+		info.BlockColor = new SerializableColor(clr);
 		blockImg.color = clr;
 	}
 	public void Clear()
 	{
-		info.BlockColor = ColorBase.defaultColor;
+		info.BlockColor = new SerializableColor(ColorBase.defaultColor);
 		blockImg.color = ColorBase.defaultColor;
 		info.IsChecked = false;
 	}

@@ -16,13 +16,12 @@ public class UIManager : MonoBehaviour
 	public GameObject gameOverPanel;
 	public SelectionManager selectionManager;
 	public Transform gameBoardCanvas;
-
 	//hammer bonus related
 	public Transform hammerTransform;
 	public Sprite hammerSprite;
 	public Sprite hammerSpritePressed;
 	private bool isHammerPressed;
-	// Use this for initialization
+	// Use this for initialization 
 	public void GameOver()
 	{
 		gameOverPanel.SetActive(true);

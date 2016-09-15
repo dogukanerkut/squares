@@ -35,7 +35,7 @@ public class BlocksArray
 			blocks[row, column] = value;
 		}
 	}
-	#region Block Availability and Adjacency control for letting user to only place blocks on adjacent blocks
+	#region Block Availability and Adjacency control for letting user to only place blocks on adjacent blocks -------------------------------------------------------------------------------------------------------------------------------
 
 	/// <summary>
 	/// Checks if newly selected block is both available and is adjacent to current block and updates local block variables if check is true.
@@ -61,7 +61,7 @@ public class BlocksArray
 	public bool CheckIfBlockAvailable(BlockInfo newBlockInfo)
 	{
 		bool rBool = false;
-		if (newBlockInfo.BlockColor == ColorBase.defaultColor) // if the new block is not empty
+		if (newBlockInfo.BlockColor.GetColor() == ColorBase.defaultColor) // if the new block is not empty
 		{
 			rBool = true;
 		}
@@ -122,7 +122,7 @@ public class BlocksArray
 		return block;
 	}
 
-	#region Detecting same color adjacent blocks and transporting that data to manager class for manager class to destroy them
+	#region Detecting same color adjacent blocks and transporting that data to manager class for manager class to destroy them -------------------------------------------------------------------------------------------------------------------------------
 
 	private List<BlockInfo> adjacentBlocksWithSameColor = new List<BlockInfo>(); //Temporary list to hold all adjacent blocks with same color
 
@@ -166,7 +166,7 @@ public class BlocksArray
 	/// <param name="adjacentBlockCount">Number of adjacent empty block is needed in order to place all new blocks.</param>
 	private void Check3Match(BlockInfo blockInfo, bool isWhiteBlockCheck = false, int adjacentBlockCount = 3) // default game rule is to find 3 or more blocks
 	{
-		Color blockColor = blockInfo.BlockColor;
+		Color blockColor = blockInfo.BlockColor.GetColor();
 		//only add this block if it's not checked
 		if (!blockInfo.IsChecked)
 		adjacentBlocksWithSameColor.Add(blockInfo);
@@ -175,25 +175,25 @@ public class BlocksArray
 		if (blockInfo.Row != Constants.RowCount - 1)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row + 1, blockInfo.Column);
-			if (blockColor == checkBlock.BlockColor && !checkBlock.IsChecked) //adjacent block should be same color as ours and should not be checked before.
+			if (blockColor == checkBlock.BlockColor.GetColor() && !checkBlock.IsChecked) //adjacent block should be same color as ours and should not be checked before.
 				adjacentBlocksWithSameColor.Add(checkBlock); // add it to our array
 		}
 		if (blockInfo.Row != 0) 
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row - 1, blockInfo.Column);
-			if (blockColor == checkBlock.BlockColor && !checkBlock.IsChecked)
+			if (blockColor == checkBlock.BlockColor.GetColor() && !checkBlock.IsChecked)
 				adjacentBlocksWithSameColor.Add(checkBlock);
 		}										  
 		if (blockInfo.Column != Constants.ColumnCount - 1)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row, blockInfo.Column + 1);
-			if (blockColor == checkBlock.BlockColor && !checkBlock.IsChecked)
+			if (blockColor == checkBlock.BlockColor.GetColor() && !checkBlock.IsChecked)
 				adjacentBlocksWithSameColor.Add(checkBlock);
 		}															  
 		if (blockInfo.Column != 0)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row, blockInfo.Column - 1);
-			if (blockColor == checkBlock.BlockColor && !checkBlock.IsChecked)
+			if (blockColor == checkBlock.BlockColor.GetColor() && !checkBlock.IsChecked)
 				adjacentBlocksWithSameColor.Add(checkBlock);
 		}
 		
@@ -274,7 +274,7 @@ public class BlocksArray
 		{
 			for (int j = 0; j < Constants.RowCount; j++)
 			{
-				if (blocks[j, i].GetComponent<Block>().info.BlockColor == ColorBase.defaultColor) // if the block is white
+				if (blocks[j, i].GetComponent<Block>().info.BlockColor.GetColor() == ColorBase.defaultColor) // if the block is white
 				{
 					emptyBlocks.Add(blocks[j, i].GetComponent<Block>().info);
 				}
@@ -362,11 +362,19 @@ public class BlocksArray
 				}
 			}
 		}
-
 		//we got what we want so we can reset our variables
 		ClearIsCheckedFlags(emptyBlocks);
 		ClearMatchedBlockLists();
 		PrepareForNextIteration();
+		for (int i = 0; i < Constants.ColumnCount; i++)
+		{
+			for (int j = 0; j < Constants.RowCount; j++)
+			{// TODO: CHECK THIS
+					blocks[j, i].GetComponent<Block>().info.IsChecked = false; // clear it just to be sure
+					blocks[j, i].GetComponent<Block>().info.IsDeadEnd = false; // clear it just to be sure
+					//emptyBlocks.Add(blocks[j, i].GetComponent<Block>().info);
+			}
+		}
 		return rBool;
 	}
 
@@ -395,7 +403,7 @@ public class BlocksArray
 	/// <param name="newBlocksCount">Number of new blocks we have</param>
 	private void AdvancedEmptyBlockCheck(BlockInfo blockInfo, int newBlocksCount)
 	{
-		Color blockColor = blockInfo.BlockColor;
+		Color blockColor = blockInfo.BlockColor.GetColor();
 		if (!adjacentBlocksWithSameColor.Contains(blockInfo))
 			adjacentBlocksWithSameColor.Add(blockInfo);
 
@@ -404,7 +412,7 @@ public class BlocksArray
 		if (blockInfo.Row != Constants.RowCount - 1 && !isSingleBlockAdded)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row + 1, blockInfo.Column);
-			if (blockColor == checkBlock.BlockColor && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd) //only add it if its same color && it doesn't included in list already && it is not a deadend
+			if (blockColor == checkBlock.BlockColor.GetColor() && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd) //only add it if its same color && it doesn't included in list already && it is not a deadend
 			{
 				adjacentBlocksWithSameColor.Add(checkBlock); // add it to our array
 				isSingleBlockAdded = true;
@@ -413,7 +421,7 @@ public class BlocksArray
 		if (blockInfo.Row != 0 && !isSingleBlockAdded)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row - 1, blockInfo.Column);
-			if (blockColor == checkBlock.BlockColor && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd)
+			if (blockColor == checkBlock.BlockColor.GetColor() && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd)
 			{
 				adjacentBlocksWithSameColor.Add(checkBlock);
 				isSingleBlockAdded = true;
@@ -422,7 +430,7 @@ public class BlocksArray
 		if (blockInfo.Column != Constants.ColumnCount - 1 && !isSingleBlockAdded)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row, blockInfo.Column + 1);
-			if (blockColor == checkBlock.BlockColor && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd)
+			if (blockColor == checkBlock.BlockColor.GetColor() && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd)
 			{
 				adjacentBlocksWithSameColor.Add(checkBlock);
 				isSingleBlockAdded = true;
@@ -431,7 +439,7 @@ public class BlocksArray
 		if (blockInfo.Column != 0 && !isSingleBlockAdded)
 		{
 			BlockInfo checkBlock = RetrieveInfo(blockInfo.Row, blockInfo.Column - 1);
-			if (blockColor == checkBlock.BlockColor && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd)
+			if (blockColor == checkBlock.BlockColor.GetColor() && !adjacentBlocksWithSameColor.Contains(checkBlock) && !checkBlock.IsDeadEnd)
 			{
 				adjacentBlocksWithSameColor.Add(checkBlock);
 				isSingleBlockAdded = true;
@@ -456,8 +464,9 @@ public class BlocksArray
 				{
 					nothingAddedCount++;
 					blockInfo.IsDeadEnd = true; // flag it as deadend
-					adjacentBlocksWithSameColor.RemoveAt(adjacentBlocksWithSameColor.Count - 1);
 					adjacencyIndex = adjacentBlocksWithSameColor.Count - 1;
+					adjacentBlocksWithSameColor.RemoveAt(adjacentBlocksWithSameColor.Count - 1);
+
 					AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1], newBlocksCount);
 				}
 				else // if nothing is added for 2 turns(referenced empty block's every possible path is calculated)
