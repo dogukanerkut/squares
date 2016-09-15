@@ -32,8 +32,8 @@ public class Block : MonoBehaviour {
 	}
 	public void Clear()
 	{
-		info.BlockColor = Color.white;
-		blockImg.color = Color.white;
+		info.BlockColor = ColorBase.defaultColor;
+		blockImg.color = ColorBase.defaultColor;
 		info.IsChecked = false;
 	}
 

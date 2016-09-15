@@ -23,20 +23,7 @@ public class EventController : MonoBehaviour
 		if (SelectionManager.gameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
 		{
 			Block selectedBlock = GetComponent<Block>();
-
 			selectionManager.SetSelectedBlock(selectedBlock);
-
-			//if (selectedBlock.block.BlockColor == Color.white)
-			//{
-			//	//selectionManager.SetSelectedBlock(selectedBlock);
-			//	if (selectionManager.IsBlocksAdjacentAndAvailable(selectedBlock))
-			//	{
-			//		selectedBlock.SetColor(Color.red);
-			//	}
-				
-			//}
-			//print(selectionManager.PreviousBlock());
-			//print(selectionManager.CurrentBlock());
 		}
 		
 	}
@@ -44,10 +31,6 @@ public class EventController : MonoBehaviour
 	{
 		Block selectedBlock = GetComponent<Block>();
 			selectionManager.StartSelection(selectedBlock);
-	}
-	public void OnPointerExit()
-	{
-		//selectionManager.EndSelection();
 	}
 
 	void Update()

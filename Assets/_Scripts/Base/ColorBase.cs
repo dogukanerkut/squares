@@ -14,25 +14,27 @@ public class ColorBase
 {
 	private List<Color> currentColors = new List<Color>();
 	private List<Color> difficultyColors = new List<Color>();
-
+	public static Color defaultColor = Color.white; // default is white unless it is modified somewhere
 	public ColorBase()
 	{
-		FillBaseColors();
+		ResetToDefault();
 	}
 	/// <summary>
 	/// Default Color state.
 	/// </summary>
-	private void FillBaseColors()
+	public void ResetToDefault()
 	{
 		currentColors.Clear();
-		currentColors.Add(Color.red);
-		currentColors.Add(Color.blue);
-		currentColors.Add(Color.green);
+		currentColors.Add(ConvertTo1(179, 255, 135)); // green
+		currentColors.Add(ConvertTo1(116, 255, 255)); // blue
+		currentColors.Add(ConvertTo1(127, 54, 255)); // purple
 
 		difficultyColors.Clear();
-		difficultyColors.Add(Color.cyan);
-		difficultyColors.Add(Color.yellow);
-		difficultyColors.Add(Color.grey);
+		difficultyColors.Add(ConvertTo1(201, 25, 96)); // red-ish
+		difficultyColors.Add(ConvertTo1(246, 255, 96)); // yellow
+		difficultyColors.Add(ConvertTo1(255, 105, 24)); // orange
+		difficultyColors.Add(ConvertTo1(245, 148, 255)); // pink
+		difficultyColors.Add(ConvertTo1(62, 62, 62)); // black-ish
 	}
 
 	public void IncreaseDifficulty()
@@ -44,11 +46,6 @@ public class ColorBase
 		}
 	}
 
-	private Color GetRandomColor()
-	{
-		return currentColors[Random.Range(0, currentColors.Count)];
-	}
-
 	public void FillColorInfo(List<BlockInfo> blockInfos)
 	{
 		for (int i = 0; i < blockInfos.Count; i++)
@@ -58,6 +55,18 @@ public class ColorBase
 		//return blockInfos;
 	}
 
+	private Color GetRandomColor()
+	{
+		return currentColors[Random.Range(0, currentColors.Count)];
+	}
+	public int GetTotalDifficulty()
+	{
+		return difficultyColors.Count;
+	}
 
+	private Color ConvertTo1(float r, float g, float b)
+	{
+		return new Color(r / 255, g / 255, b / 255);
+	}
 
 }

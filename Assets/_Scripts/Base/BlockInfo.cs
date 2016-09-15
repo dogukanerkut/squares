@@ -15,7 +15,7 @@ public class BlockInfo
 	{
 		Row = -1;
 		Column = -1;
-		blockColor = Color.white;
+		blockColor = ColorBase.defaultColor;
 	}
 	public BlockInfo(int _row, int _column, Color _color)
 	{

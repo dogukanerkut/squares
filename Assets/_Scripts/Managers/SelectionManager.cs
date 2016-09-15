@@ -14,36 +14,55 @@ using UnityEngine.Events;
 /// </summary>
 public class SelectionManager : MonoBehaviour
 {
-
-	// Use this for initialization
-
-	public BlocksArray blocks;
-	ColorBase colorBase = new ColorBase();
-	List<BlockInfo> newBlocks = new List<BlockInfo>();
-	List<BlockInfo> hintBlocks = new List<BlockInfo>();
-
-	List<Block> blocksPlaced = new List<Block>();
-
+	//Initial class implementation
+	private BlocksArray blocks;
+	private ColorBase colorBase = new ColorBase();
+	//Default block color of grid
+	public Color defaultBlockColor;
+	//Blocks placed holders
 	Block currentBlock;
 	Block previousBlock;
-	private int selectionCount = 0;
-	public static GameState gameState;
-
+	List<Block> blocksPlaced = new List<Block>();
+	// players input on how many blocks he dragged
+	private int selectionCount = 0; 
+	//General Game Variables
 	public GameObject blockPrefab;
 	public RectTransform gamePanel;
+	public static GameState gameState;
+	//New Blocks Variables
 	public RectTransform newBlocksPanel;
-	public RectTransform hintBlocksPanel;
-	private Image[] hintBlockImages;
-	private bool isHintUsed;
+	private Image[] newBlockImages;
+	List<BlockInfo> newBlocks = new List<BlockInfo>();
+	//Score Variables
 	public Text scoreText;
 	private int score;
 	private int updatedScore;
-	private Image[] newBlockImages;
-
+	private bool isScoreIncreased;
+	//Hint Blocks Variables
+	public RectTransform hintBlocksPanel;
+	private Image[] hintBlockImages;
+	private bool isHintUsed;
+	List<BlockInfo> hintBlocks = new List<BlockInfo>();
+	//Difficulty settings
+	[Header("Hover Difficulty Brackets to see info")]
+	[Tooltip("Difficulty counter increases when player matches atleast 3 blocks and resets when player reaches a bracket")]
+	public int[] difficultyBrackets;
+	private int difficultyCounter;
+	private int currentDifficultyBracket = 0;
+	//Unity Events
 	public UnityEvent gameOverEvent;
 	public UnityEvent hammerUsedEvent;
 	void Awake()
 	{
+		#region safecheck
+		if (colorBase.GetTotalDifficulty() != difficultyBrackets.Length)
+			Debug.LogError("Difficulty Brackets should be equal with Difficulty Color Count!\nDifficulty Brackets = " + difficultyBrackets.Length +
+						  "\nDifficulty Color Count = " + colorBase.GetTotalDifficulty() + "\nFix Difficulty Brackets Size in " + gameObject.name +
+						  " or Add/Deduct Difficulty Colors in " + colorBase.ToString() + " class");
+		#endregion
+
+		ColorBase.defaultColor = defaultBlockColor;
+
 		newBlockImages = newBlocksPanel.GetComponentsInChildren<Image>();
 		hintBlockImages = hintBlocksPanel.GetComponentsInChildren<Image>();
 		//disable all hintBlockImages when game starts
@@ -74,12 +93,32 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.transform.localScale = Vector3.one; // Instantiated objects has different scale value than 1 somehow?
 				blocks[j, i] = tempBlock;
 
-				tempBlock.GetComponent<Block>().FillInfo(j, i, Color.white); //Set object's row and column
+				tempBlock.GetComponent<Block>().FillInfo(j, i, ColorBase.defaultColor); //Set object's row and column
 			}
 		}
 		CreateBlocks(CreationType.Actual);
 
 	}
+
+	/// <summary>
+	/// Resets the board for new game
+	/// </summary>
+	public void ResetBoard() // used from GameOverPanel(Game object in hierarchy)
+	{
+		gameState = GameState.Idle;
+		for (int i = 0; i < Constants.ColumnCount; i++)
+		{
+			for (int j = 0; j < Constants.RowCount; j++)
+			{
+				blocks[j, i].GetComponent<Block>().Clear();
+				blocks[j, i].GetComponent<Block>().info.Clear();
+			}
+		}
+		SetScore(0, false); // set score to 0
+		ResetDifficulty(); // resets difficulty
+		CreateBlocks(CreationType.Actual); // create new blocks
+	}
+
 	private enum CreationType
 	{ Actual, Hint }
 	/// <summary>
@@ -114,7 +153,7 @@ public class SelectionManager : MonoBehaviour
 		else // create random new blocks  here
 		{
 			blocksInfo.Clear();
-			blocksInfo = blocksCreator.GetRandomBlocks(); // bring new blocks random blocks
+			blocksInfo = blocksCreator.GetRandomBlocks(); // bring new random blocks
 			colorBase.FillColorInfo(blocksInfo); // color newly introduced blocks randomly
 		}
 		blockImages = ProcessBlocks(blockImages, blocksInfo);
@@ -138,7 +177,6 @@ public class SelectionManager : MonoBehaviour
 	/// </summary>
 	/// <param name="blockImages">block image list to be processed</param>
 	/// <param name="blocksInfo">blocksInfo to fill color of images</param>
-	/// <returns></returns>
 	Image[] ProcessBlocks(Image[] blockImages, List<BlockInfo> blocksInfo)
 	{
 		for (int i = 0; i < blockImages.Length; i++)
@@ -152,26 +190,7 @@ public class SelectionManager : MonoBehaviour
 		return blockImages;
 	}
 
-	/// <summary>
-	/// Resets the board for new game
-	/// </summary>
-	public void ResetBoard() // used from GameOverPanel(Game object in hierarchy)
-	{
-		gameState = GameState.Idle;
-		for (int i = 0; i < Constants.ColumnCount; i++)
-		{
-			for (int j = 0; j < Constants.RowCount; j++)
-			{
-				blocks[j, i].GetComponent<Block>().Clear();
-				blocks[j, i].GetComponent<Block>().info.Clear();
-			}
-		}
-		CreateBlocks(CreationType.Actual);
-		score = 0;
-		updatedScore = 0;
-	}
-
-	#region This block consists of code to detect when player touches blocks, drags within them and releases finger
+	#region Touch & Drag & Release detection of player-------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
 	/// When player first touches a block, Update touched block and start touching process.
 	/// </summary>
@@ -283,12 +302,16 @@ public class SelectionManager : MonoBehaviour
 			else // player placed all of given blocks to grid
 			{
 				SoundManager.Instance.ResetPlaceBlockPitch();
-				CreateBlocks(CreationType.Actual); // create new blocks to continue the game
+				
 
 				if (blocks.CheckAdjacentBlocks(blocksPlaced)) // send placed block list for adjacency check and if there are any 3 or more adjacent block found
+				{
 					ExplodeBlocks(); // explode blocks if there are any
+				}
 
-				if (blocks.CheckEmptyBlocks(newBlocks.Count))
+				CreateBlocks(CreationType.Actual); // create new blocks to continue the game
+
+				if (blocks.CheckEmptyBlocks(newBlocks.Count)) // Use this method after creating blocks!
 					gameState = GameState.Idle;
 				else // game over here
 				{
@@ -304,6 +327,12 @@ public class SelectionManager : MonoBehaviour
 			selectionCount = 0;
 			blocksPlaced.Clear();
 		}
+	}
+
+	public void ClearSelection()
+	{
+		currentBlock = null;
+		selectionCount = 0;
 	}
 
 	/// <summary>
@@ -334,13 +363,36 @@ public class SelectionManager : MonoBehaviour
 				adjacentBlock.Clear(); // explode blocks(set their color to white etc.)
 			}
 		}
-		isScoreIncreased = true;
-		updatedScore += totalScore;
+		//SetScore(updatedScore)
+		ControlDifficulty();
+		AddToScore(totalScore);
 		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
 	}
 	#endregion
 
-	private bool isScoreIncreased;
+	#region Difficulty Settings-------------------------------------------------------------------------------------------------------------------------------
+	private void ControlDifficulty()
+	{
+		if (currentDifficultyBracket != difficultyBrackets.Length) // if we didn't reach our last bracket
+		{
+			difficultyCounter++; // increase difficulty counter
+			if (difficultyCounter == difficultyBrackets[currentDifficultyBracket]) // if we reach our current bracket
+			{
+				currentDifficultyBracket++; //increase our current bracket
+				difficultyCounter = 0; //reset our counter
+				colorBase.IncreaseDifficulty();// add another color in our color pool
+				print("NEW COLOR!");
+			}
+		}
+	}
+	
+	private void ResetDifficulty()
+	{
+		difficultyCounter = 0;
+		currentDifficultyBracket = 0;
+		colorBase.ResetToDefault();
+	}
+#endregion
 
 	/// <summary>
 	/// Starts floating text animation for every block that is going to be exploded.
@@ -354,15 +406,8 @@ public class SelectionManager : MonoBehaviour
 		tx.color = block.info.BlockColor;
 		tx.text = "+" + points.ToString();
 		an.SetTrigger("startFloat");
-
 	}
-	public void ClearSelection()
-	{
-		currentBlock = null;
-		selectionCount = 0;
-	}
-
-	#region PowerUp Section
+	#region PowerUp Section-------------------------------------------------------------------------------------------------------------------------------
 	public void HammerPowerUp()// called from Hammer Button
 	{
 		//only enable hammer power up button to be clicked if there are any colored blocks exist in grid
@@ -388,12 +433,11 @@ public class SelectionManager : MonoBehaviour
 		if (gameState == GameState.Idle)
 			CreateBlocks(CreationType.Actual);
 	}
-
 	/// <summary>
 	/// Checks whole grid to see if there are any colored block exists, terminates check immeditely when it founds a colored block
 	/// </summary>
 	/// <returns></returns>
-	private bool IsAnyColoredBlockExist()
+	private bool IsAnyColoredBlockExist() // this check is needed for hammer powerup
 	{
 		bool rBool = false;
 		for (int i = 0; i < Constants.ColumnCount; i++)
@@ -402,7 +446,7 @@ public class SelectionManager : MonoBehaviour
 				break;
 			for (int j = 0; j < Constants.RowCount; j++)
 			{
-				if (blocks[j, i].GetComponent<Block>().info.BlockColor != Color.white) // if color of block is not white
+				if (blocks[j, i].GetComponent<Block>().info.BlockColor != ColorBase.defaultColor) // if color of block is not white
 				{
 					rBool = true;
 					break;
@@ -410,6 +454,37 @@ public class SelectionManager : MonoBehaviour
 			}
 		}
 		return rBool;
+	}
+	#endregion
+	#region Score section-------------------------------------------------------------------------------------------------------------------------------
+	
+
+	/// <summary>
+	/// Sets score either with animation or directly.
+	/// </summary>
+	/// <param name="newScore">new score</param>
+	/// <param name="isAnimated">is score should be animated.</param>
+	private void SetScore(int newScore, bool isAnimated)
+	{
+		if (isAnimated)
+		{
+			updatedScore = newScore;
+			isScoreIncreased = true;
+		}
+		else
+		{
+			score = newScore;
+			updatedScore = newScore;
+			scoreText.text = newScore.ToString();
+		}
+	}
+	/// <summary>
+	/// Adds to total score
+	/// </summary>
+	/// <param name="addition"></param>
+	private void AddToScore(int addition)
+	{
+		SetScore(updatedScore + addition, true);
 	}
 	#endregion
 

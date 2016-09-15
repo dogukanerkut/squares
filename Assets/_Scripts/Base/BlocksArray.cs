@@ -61,7 +61,7 @@ public class BlocksArray
 	public bool CheckIfBlockAvailable(BlockInfo newBlockInfo)
 	{
 		bool rBool = false;
-		if (newBlockInfo.BlockColor == Color.white) // if the new block is not empty
+		if (newBlockInfo.BlockColor == ColorBase.defaultColor) // if the new block is not empty
 		{
 			rBool = true;
 		}
@@ -262,8 +262,9 @@ public class BlocksArray
 	#region Check all white blocks to see if any available spots left for player to put
 	/// <summary>
 	/// Checks all empty Blocks in board and returns immediately if a consequent adjacent place found for player to place newly created blocks
-	/// </summary>
-	/// <returns></returns>
+	/// <para>WARNING! This method must be used after new blocks created!</para>
+	///</summary>
+	///<param name="newBlocksCount">Number of new blocks created</param>
 	public bool CheckEmptyBlocks(int newBlocksCount)
 	{
 		List<BlockInfo> emptyBlocks = new List<BlockInfo>();
@@ -273,7 +274,7 @@ public class BlocksArray
 		{
 			for (int j = 0; j < Constants.RowCount; j++)
 			{
-				if (blocks[j, i].GetComponent<Block>().info.BlockColor == Color.white) // if the block is white
+				if (blocks[j, i].GetComponent<Block>().info.BlockColor == ColorBase.defaultColor) // if the block is white
 				{
 					emptyBlocks.Add(blocks[j, i].GetComponent<Block>().info);
 				}
