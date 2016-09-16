@@ -24,7 +24,7 @@ public class SelectionManager : MonoBehaviour
 	Block previousBlock;
 	List<Block> blocksPlaced = new List<Block>();
 	// players input on how many blocks he dragged
-	private int selectionCount = 0; 
+	private int selectionCount = 0;
 	//General Game Variables
 	public GameObject blockPrefab;
 	public RectTransform gamePanel;
@@ -54,6 +54,15 @@ public class SelectionManager : MonoBehaviour
 	//Unity Events
 	public UnityEvent gameOverEvent;
 	public UnityEvent hammerUsedEvent;
+
+	#region integration safecheck variables
+	//hardcoded default values of Game Panel's Grid Layout Group's spacing and cellsize
+	float defaultSpacingX = 8;
+	float defaultSpacingY = 8;
+	float defaultCellSizeX = 64;
+	float defaultCellSizeY = 64;
+	#endregion
+
 	void Awake()
 	{
 		#region safecheck
@@ -76,6 +85,19 @@ public class SelectionManager : MonoBehaviour
 		GenerateBoard();
 		GridLayoutGroup gamePanelGLG = gamePanel.GetComponent<GridLayoutGroup>();
 		gamePanelGLG.constraintCount = Constants.RowCount; // if grid size is changed, adjust constrain count accordingly
+
+		#region safecheck
+		if (gamePanelGLG.spacing.x != defaultSpacingX || gamePanelGLG.spacing.y != defaultSpacingY)
+		{
+			Animator anim = gamePanelGLG.GetComponent<Animator>();
+			Debug.LogError("Please update Animator component of [" + anim.runtimeAnimatorController.name + "]'s Board Reset Animation's X and Y spacing values, and [defaultSpacingX] and [defaultSpacingY] values of [" + this.name + " Class]");
+		}
+		if (gamePanelGLG.cellSize.x != defaultCellSizeX || gamePanelGLG.cellSize.y != defaultCellSizeY)
+		{
+			Animator anim = gamePanelGLG.GetComponent<Animator>();
+			Debug.LogError("Please update [" + anim.runtimeAnimatorController.name + " Animator]'s Board Game Over Animation's X and Y cell size values, and [defaultCellSizeX] and [defaultCellSizeY] values of [" + this.name + " Class]");
+		}
+		#endregion
 	}
 
 	#region Save & Load Operations-------------------------------------------------------------------------------------------------------------------------------
@@ -106,7 +128,7 @@ public class SelectionManager : MonoBehaviour
 
 	public GameVariables GetGameVariables()
 	{
-		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true: false;
+		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true : false;
 		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, isHammerUsed, isHintUsed);
 	}
 
@@ -143,6 +165,10 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Block>().FillInfo(j, i, ColorBase.defaultColor); //Set object's row and column
 			}
 		}
+		#region safecheck
+		if (blockPrefab.GetComponent<Image>().color != Color.white)
+			Debug.LogError("Please set [" + blockPrefab.name + " Prefab]s Color attribute back to white. You can change color of blocks in [" + gameObject.name + " Game Object]'s [Default Block Color] property in Editor." );
+		#endregion
 		//blocks[2, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[2, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[3, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
@@ -189,6 +215,8 @@ public class SelectionManager : MonoBehaviour
 		SetScore(0, false); // save if highscore and set score to 0
 		ResetDifficulty(); // resets difficulty
 		CreateBlocks(BlockCreationType.Actual); // create new blocks
+		Animator boardAnimator = gamePanel.GetComponent<Animator>();
+		boardAnimator.SetTrigger("reset");
 	}
 
 	public enum BlockCreationType
@@ -266,11 +294,27 @@ public class SelectionManager : MonoBehaviour
 
 		for (int i = 0; i < blocksInfo.Count; i++)
 		{
-			blockImages[i].gameObject.SetActive(true);
+			blockImages[i].gameObject.SetActive(true); 
 			blockImages[i].color = blocksInfo[i].BlockColor.GetColor();
 		}
+		//Sequential new block enabling, did not like it. So it is deactivated, see below explanation for more info
+		//blockImages[0].gameObject.SetActive(true);
+		//activateBlockIndex = 1;
+		//if (blocksInfo.Count > 1)
+		//	StartCoroutine(ActiveBlocksWithDelay(blockImages, blocksInfo.Count));
 		return blockImages;
 	}
+	//Sequential new block enabling, did not like it. So it is deactivated.-------------------------------------------------------------------------------------------------------------------------------
+	//Activate below and above lines and deactivate "blockImages[i].gameObject.SetActive(true);" on above to see changes.
+	//private int activateBlockIndex;
+	//IEnumerator ActiveBlocksWithDelay(Image[] blockImages, int maxCount)
+	//{
+	//	yield return new WaitForSeconds(0.05f);
+	//	blockImages[activateBlockIndex].gameObject.SetActive(true);
+	//	activateBlockIndex++;
+	//	if (activateBlockIndex != maxCount)
+	//		StartCoroutine(ActiveBlocksWithDelay(blockImages, maxCount));
+	//}
 
 	#region Touch & Drag & Release detection of player-------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
@@ -288,6 +332,7 @@ public class SelectionManager : MonoBehaviour
 
 			UpdateSelectedBlock(selectedBlock);
 			SoundManager.Instance.PlayPlaceBlock();
+			UpdateNewBlocksAnimation(newBlockImages[0].gameObject, true);
 		}
 		//if game state is hammer power up and the touched block is a colored one.
 		else if(!blocks.CheckIfBlockAvailable(selectedBlock.info) && gameState == GameState.HammerPowerUp)
@@ -334,9 +379,10 @@ public class SelectionManager : MonoBehaviour
 				// In order to revert our selection
 				previousBlock = currentBlock; // Set current block as previous block as it will become previous block after this selection
 				currentBlock = selectedBlock; // Set newly selected block as current block
-
+				UpdateNewBlocksAnimation(newBlockImages[selectionCount].gameObject, true);
 				UpdateSelectedBlock(selectedBlock); // hover to method to see description
 				SoundManager.Instance.PlayPlaceBlock();
+				
 			}
 		}
 		// if player intends to revert his placed block by going backwards in placed blocks.
@@ -351,6 +397,7 @@ public class SelectionManager : MonoBehaviour
 				//remove last placed block and update selection count accordingly
 				blocksPlaced[selectedBlockIndex+1].Clear();
 				blocksPlaced.RemoveAt(selectedBlockIndex+1);
+				UpdateNewBlocksAnimation(newBlockImages[selectedBlockIndex+1].gameObject, false);
 				selectionCount--;
 				SoundManager.Instance.PlayRetrieveBlock();
 			}
@@ -375,7 +422,10 @@ public class SelectionManager : MonoBehaviour
 			{
 				//remove all blocks that are temporarily placed to grid
 				for (int i = 0; i < blocksPlaced.Count; i++)
+				{
 					blocksPlaced[i].Clear();
+					UpdateNewBlocksAnimation(newBlockImages[i].gameObject, false);
+				}
 
 				SoundManager.Instance.PlayRetrieveBlock();
 				SoundManager.Instance.ResetPlaceBlockPitch();
@@ -399,6 +449,9 @@ public class SelectionManager : MonoBehaviour
 				{
 					gameState = GameState.GameOver;
 					gameOverEvent.Invoke();
+
+					Animator boardAnimator = gamePanel.GetComponent<Animator>();
+					boardAnimator.SetTrigger("gameOver");
 					SoundManager.Instance.PlayGameOver();
 				}
 
@@ -586,6 +639,20 @@ public class SelectionManager : MonoBehaviour
 
 	}
 	#endregion
+
+	void UpdateNewBlocksAnimation(GameObject blockGO, bool isPlaced)
+	{
+		Animator anim = blockGO.GetComponent<Animator>();
+		if (blockGO.activeSelf)
+		{
+			anim.SetBool("shrink", isPlaced);
+		}
+	}
+	IEnumerator AnimationSlightDelay(GameObject blockGO, bool isPlaced)
+	{
+		yield return new WaitForSeconds(5);
+		UpdateNewBlocksAnimation(blockGO, isPlaced);
+	}
 
 	void Update()
 	{

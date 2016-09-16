@@ -19,8 +19,14 @@ public class SaveLoadManager : MonoBehaviour
 	void Awake()
 	{
 		selectionManager = GameObject.FindGameObjectWithTag(Constants.Tag_SelectionManager).GetComponent<SelectionManager>();
-		if (loadData)
-			LoadGame();
+		if (loadData) LoadGame();
+
+		#region safecheck
+#if UNITY_EDITOR
+		if (!saveData) Debug.Log("Game will not save data");
+		if (!loadData) Debug.Log("Game will not load data");
+#endif
+		#endregion
 	}
 
 	private void LoadGame()

@@ -37,6 +37,14 @@ public class SoundManager : MonoBehaviour {
 	public AudioSource hammerPowerUp;
 	public AudioSource hintPowerUp;
 
+	void Awake()
+	{
+		#region safecheck
+#if UNITY_EDITOR
+		if (!isSoundsActive) Debug.Log("All sounds are disabled.");
+#endif
+		#endregion
+	}
 	private void IncreasePlaceBlockPitch()
 	{
 		if(isSoundsActive)	placeBlock.pitch += placeBlockPitchRate;
