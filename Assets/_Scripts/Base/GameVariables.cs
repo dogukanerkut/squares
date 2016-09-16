@@ -18,7 +18,8 @@ public class GameVariables {
 	public int gameStateIndex;
 	public bool isHammerUsed;
 	public bool isHintUsed;
-	public GameVariables(int _score, int _highScore, int _difficultyCounter, int _currentDifficultyBracket, int _gameStateIndex, bool _isHammerUsed, bool _isHintUsed)
+	public bool isSoundActive;
+	public GameVariables(int _score, int _highScore, int _difficultyCounter, int _currentDifficultyBracket, int _gameStateIndex, bool _isHammerUsed, bool _isHintUsed, bool _isSoundActive)
 	{
 		score = _score;
 		highScore = _highScore;
@@ -27,6 +28,7 @@ public class GameVariables {
 		gameStateIndex = _gameStateIndex;
 		isHammerUsed = _isHammerUsed;
 		isHintUsed = _isHintUsed;
+		isSoundActive = _isSoundActive;
 
 	}
 }

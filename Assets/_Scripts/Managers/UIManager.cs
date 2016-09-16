@@ -18,11 +18,20 @@ public class UIManager : MonoBehaviour
 	public Transform gameBoardCanvas;
 	//Hammer Bonus
 	public Transform hammerTransform;
-	public Sprite hammerSprite;
-	public Sprite hammerSpritePressed;
-	private bool isHammerPressed;
+	//sound button
+	public Image soundImage;
+	public Sprite soundSprite;
+	public Sprite soundSilencedSprite;
 	//
 	// Use this for initialization 
+	public void Awake()
+	{
+		if (SoundManager.Instance.isSoundsActive)
+			soundImage.sprite = soundSprite;
+		else
+			soundImage.sprite = soundSilencedSprite;
+			
+	}
 	public void GameOver()
 	{
 		gameOverPanel.SetActive(true);
@@ -34,19 +43,22 @@ public class UIManager : MonoBehaviour
 
 	public void HammerPressed()
 	{
-		if (!isHammerPressed && SelectionManager.gameState == GameState.HammerPowerUp)
+		if (SelectionManager.gameState == GameState.HammerPowerUp)
 		{
-			isHammerPressed = true;
 			Animator anim = hammerTransform.GetComponent<Animator>();
-			anim.SetBool("isPressed", true);
-		//	hammerButton.image.sprite = hammerSpritePressed;
+			anim.SetTrigger("isPressed");
+			//	hammerButton.image.sprite = hammerSpritePressed;
+			SoundManager.Instance.PlayButtonClick();
 		}
+		else SoundManager.Instance.PlayInvalid();
 		
 	}
-	public void HammerUsed() //callback from BlockManager's hammerUsedEvent
+	public void SoundButton()
 	{
-		isHammerPressed = false;
-		Animator anim = hammerTransform.GetComponent<Animator>();
-		anim.SetBool("isPressed", false);
-	}
+		if (SoundManager.Instance.isSoundsActive)
+			soundImage.sprite = soundSilencedSprite;
+		else
+			soundImage.sprite = soundSprite;
+		SoundManager.Instance.isSoundsActive = !SoundManager.Instance.isSoundsActive;
+    }
 }

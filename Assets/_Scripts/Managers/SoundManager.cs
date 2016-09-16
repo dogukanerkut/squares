@@ -36,7 +36,7 @@ public class SoundManager : MonoBehaviour {
 	public AudioSource buttonClick;
 	public AudioSource hammerPowerUp;
 	public AudioSource hintPowerUp;
-
+	public AudioSource invalid;
 	void Awake()
 	{
 		#region safecheck
@@ -44,6 +44,7 @@ public class SoundManager : MonoBehaviour {
 		if (!isSoundsActive) Debug.Log("All sounds are disabled.");
 #endif
 		#endregion
+
 	}
 	private void IncreasePlaceBlockPitch()
 	{
@@ -96,5 +97,9 @@ public class SoundManager : MonoBehaviour {
 	public void PlayHintPowerUp()
 	{
 		if (isSoundsActive) hintPowerUp.Play();
+	}
+	public void PlayInvalid()
+	{
+		if (isSoundsActive) invalid.Play();
 	}
 }

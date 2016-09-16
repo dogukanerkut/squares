@@ -65,7 +65,6 @@ public class SelectionManager : MonoBehaviour
 	private int currentDifficultyBracket = 0;
 	//Unity Events
 	public UnityEvent gameOverEvent;
-	public UnityEvent hammerUsedEvent;
 
 	#region integration safecheck variables
 	//hardcoded default values of Game Panel's Grid Layout Group's spacing and cellsize
@@ -167,7 +166,7 @@ public class SelectionManager : MonoBehaviour
 	public GameVariables GetGameVariables()
 	{
 		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true : false;
-		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed);
+		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed, SoundManager.Instance.isSoundsActive);
 	}
 
 	public void SetGameVariables(GameVariables gameVariables)
@@ -177,10 +176,11 @@ public class SelectionManager : MonoBehaviour
 		difficultyCounter = gameVariables.difficultyCounter;
 		currentDifficultyBracket = gameVariables.currentDifficultyBracket;
 		gameState = (GameState)gameVariables.gameStateIndex;
-
 		if (gameVariables.isHammerUsed)
-			HammerPowerUp();
+			ProcessHammerPowerUp(true);
+
 		isHintUsed = gameVariables.isHintUsed;
+		SoundManager.Instance.isSoundsActive = gameVariables.isSoundActive;
 		colorBase.IncreaseDifficulty(currentDifficultyBracket);
 		if (gameState == GameState.GameOver)
 		{
@@ -340,9 +340,7 @@ public class SelectionManager : MonoBehaviour
 		//	StartCoroutine(ActiveBlocksWithDelay(blockImages, blocksInfo.Count));
 		return blockImages;
 	}
-	#endregion
-
-	//Sequential new block enabling, did not like it. So it is deactivated.-------------------------------------------------------------------------------------------------------------------------------
+	//Sequential new block enabling, did not like it. So it is deactivated.
 	//Activate below and above lines and deactivate "blockImages[i].gameObject.SetActive(true);" on above to see changes.
 	//private int activateBlockIndex;
 	//IEnumerator ActiveBlocksWithDelay(Image[] blockImages, int maxCount)
@@ -353,6 +351,7 @@ public class SelectionManager : MonoBehaviour
 	//	if (activateBlockIndex != maxCount)
 	//		StartCoroutine(ActiveBlocksWithDelay(blockImages, maxCount));
 	//}
+	#endregion
 
 	#region Touch & Drag & Release detection of player-------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
@@ -577,11 +576,13 @@ public class SelectionManager : MonoBehaviour
 
 	public void HintPowerUp()// called from Hint Button
 	{
-		if (gameState == GameState.Idle)
+		if (gameState == GameState.Idle && !isHintUsed)
 		{
-		CreateBlocks(BlockCreationType.Hint);
-		isHintUsed = true;
+			CreateBlocks(BlockCreationType.Hint);
+			isHintUsed = true;
+			SoundManager.Instance.PlayHintPowerUp();
 		}
+		else SoundManager.Instance.PlayInvalid();
 	}
 
 	public void SkipPowerUp()// called from Skip Button
@@ -594,7 +595,7 @@ public class SelectionManager : MonoBehaviour
 	/// Checks whole grid to see if there are any colored block exists, terminates check immeditely when it founds a colored block
 	/// </summary>
 	/// <returns></returns>
-	public void ProcessHammerPowerUp(bool isActivate) // this check is needed for hammer powerup
+	private void ProcessHammerPowerUp(bool isActivate) // this check is needed for hammer powerup
 	{
 		bool isAnyColoredBlockExist = false;
 		for (int i = 0; i < Constants.ColumnCount; i++)
@@ -621,7 +622,6 @@ public class SelectionManager : MonoBehaviour
 		selectedBlock.Clear(); // remove it's colors
 		SoundManager.Instance.PlayHammerPowerUp();
 		gameState = GameState.Idle;
-		hammerUsedEvent.Invoke();
 	}
 	#endregion
 
