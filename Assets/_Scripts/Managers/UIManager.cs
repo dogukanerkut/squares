@@ -12,15 +12,16 @@ using UnityEngine.UI;
 /// </summary>
 public class UIManager : MonoBehaviour
 {
-
+	//Grid
 	public GameObject gameOverPanel;
 	public SelectionManager selectionManager;
 	public Transform gameBoardCanvas;
-	//hammer bonus related
+	//Hammer Bonus
 	public Transform hammerTransform;
 	public Sprite hammerSprite;
 	public Sprite hammerSpritePressed;
 	private bool isHammerPressed;
+	//
 	// Use this for initialization 
 	public void GameOver()
 	{

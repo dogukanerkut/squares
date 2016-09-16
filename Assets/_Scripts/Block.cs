@@ -13,7 +13,7 @@ using UnityEngine.UI;
 public class Block : MonoBehaviour {
 	public BlockInfo info;
 	private Image blockImg;
-
+	public GameObject hammerImage;
 	void Awake ()
 	{
 		blockImg = GetComponent<Image>();

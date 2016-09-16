@@ -60,6 +60,10 @@ public class ColorBase
 		}
 		//return blockInfos;
 	}
+	public Color GetLatestColor()
+	{
+		return currentColors[currentColors.Count - 1];
+	}
 
 	private Color GetRandomColor()
 	{

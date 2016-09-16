@@ -5,9 +5,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
 /// <para>Description: Handles all operations about board, Checking for adjacent and same color blocks, transporting that data to manager class for it to destroy them</para>
 /// <para>checking block availability for placing blocks to board, letting user to place blocks on only adjacent blocks</para>
 /// </summary>
@@ -95,7 +92,6 @@ public class BlocksArray
 		{
 			if (block == blockInfo2) // if any of adjacent blocks is the block that has been selected by player.
 			{
-				//Debug.Log("Block is Adjacent!");
 				rBool = true;
 			}
 		}
@@ -114,10 +110,6 @@ public class BlocksArray
 		if (_row <= Constants.RowCount - 1 && _row >= 0 && _column <= Constants.ColumnCount - 1 && _column >= 0) //safecheck
 		{
 			block = blocks[_row, _column].GetComponent<Block>().info;
-		}
-		else
-		{
-			Debug.LogError("Index out of Range!"); // for debugging purpose.
 		}
 		return block;
 	}
@@ -259,7 +251,7 @@ public class BlocksArray
 	}
 	#endregion
 
-	#region Check all white blocks to see if any available spots left for player to put
+	#region Check all white blocks to see if any available spots left for player to put -------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
 	/// Checks all empty Blocks in board and returns immediately if a consequent adjacent place found for player to place newly created blocks
 	/// <para>WARNING! This method must be used after new blocks created!</para>
@@ -367,15 +359,6 @@ public class BlocksArray
 		ClearIsCheckedFlags(emptyBlocks);
 		ClearMatchedBlockLists();
 		PrepareForNextIteration();
-		for (int i = 0; i < Constants.ColumnCount; i++)
-		{
-			for (int j = 0; j < Constants.RowCount; j++)
-			{// TODO: CHECK THIS
-					blocks[j, i].GetComponent<Block>().info.IsChecked = false; // clear it just to be sure
-					blocks[j, i].GetComponent<Block>().info.IsDeadEnd = false; // clear it just to be sure
-					//emptyBlocks.Add(blocks[j, i].GetComponent<Block>().info);
-			}
-		}
 		return rBool;
 	}
 
@@ -453,48 +436,51 @@ public class BlocksArray
 			}
 			else if (checkBlock.IsDeadEnd) isAdjacentToDeadEndBlock = true;
 		}
+
 		if (consequentCount != adjacentBlocksWithSameColor.Count) // if any blocks added to list
 			nothingAddedCount = 0; // reset our counter
-		//if (adjacentBlocksWithSameColor.Count > 1) // if any adjacent same color blocks found
-		//{
-			adjacencyIndex++; // block is checked so increase index
 
-			if (adjacentBlocksWithSameColor.Count >= newBlocksCount) // if there are no more blocks to check, check if adjacent blocks are more than given block Count
+		adjacencyIndex++; // block is checked so increase index
+
+		if (adjacentBlocksWithSameColor.Count >= newBlocksCount) // if there are no more blocks to check, check if adjacent blocks are more than given block Count
+		{
+			emptySpaceAvailable = true;
+			PrepareForNextIteration(); // this clears all temporary lists and index
+		}
+		else if (adjacencyIndex < adjacentBlocksWithSameColor.Count) //continue only if there are more blocks to check 
+			AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacencyIndex], newBlocksCount); //recursive!
+		else // if there are no more blocks to check and collected adjacent blocks are less than newBlocksCount
+		{
+			//This place of code indicates that we are at a "dead end" so we need to flag this block as dead end and
+			// remove it from our list because we need to search for another path.
+			if (nothingAddedCount < 2)
 			{
-				emptySpaceAvailable = true;
-				PrepareForNextIteration(); // this clears all temporary lists and index
-			}
-			else if (adjacencyIndex < adjacentBlocksWithSameColor.Count) //continue only if there are more blocks to check 
-				AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacencyIndex], newBlocksCount); //recursive!
-			else // if there are no more blocks to check and collected adjacent blocks are less than newBlocksCount
-			{
-				//This place of code indicates that we are at a "dead end" so we need to flag this block as dead end and
-				// remove it from our list because we need to search for another path.
-				if (nothingAddedCount < 2)
-				{
-					nothingAddedCount++;
+				nothingAddedCount++;
 				//blockInfo.IsDeadEnd = true; // flag it as deadend
 				if (isAdjacentToDeadEndBlock)
 				{
+					//We flag our "dead end" block and transfer it to removedBlocks list so it won't bother us anymore for this run
 					adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1].IsDeadEnd = true;
-                    removedBlocks.Add(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1]);
+					removedBlocks.Add(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1]);
 					adjacentBlocksWithSameColor.RemoveAt(adjacentBlocksWithSameColor.Count - 1);
-					adjacencyIndex = adjacentBlocksWithSameColor.Count - 1;
+					adjacencyIndex = adjacentBlocksWithSameColor.Count - 1; // update adjacency index to check different blocks
 				}
 				AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1], newBlocksCount);
-				}
-				else // if nothing is added for 2 turns(referenced empty block's every possible path is calculated)
-				{
-					foreach (BlockInfo block in adjacentBlocksWithSameColor)
-						block.IsDeadEnd = false;
-					foreach (BlockInfo block in removedBlocks)
-						block.IsDeadEnd = false;
-					removedBlocks.Clear();
-					PrepareForNextIteration();
-					nothingAddedCount = 0;
-				}
 			}
-	//}
-}
+			else // if nothing is added for 2 turns(referenced empty block's every possible path is calculated)
+			{
+				//false every blocks' isDeadEnd so we can start a clean look from a different reference point(a different block's path)
+				foreach (BlockInfo block in adjacentBlocksWithSameColor)
+					block.IsDeadEnd = false;
+				foreach (BlockInfo block in removedBlocks)
+					block.IsDeadEnd = false;
+				removedBlocks.Clear();
+				PrepareForNextIteration();
+				nothingAddedCount = 0;
+			}
+		}
+		//}
+	}
 	#endregion
+
 }

@@ -12,8 +12,16 @@ using UnityEngine.Events;
 /// Attached To: SelectionManager
 /// Description: Handles selection activities(when player presses and drags).
 /// </summary>
+[System.Serializable]
+public class GridSize
+{
+	public int X;
+	public int Y;
+}
 public class SelectionManager : MonoBehaviour
 {
+	//Grid
+	public GridSize gridSize;
 	//Initial class implementation
 	private BlocksArray blocks;
 	private ColorBase colorBase = new ColorBase();
@@ -40,6 +48,10 @@ public class SelectionManager : MonoBehaviour
 	private int highScore;
 	private int updatedScore;
 	private bool isScoreIncreased;
+	//Combo and New Color Text
+	public Text comboText;
+	public Animator newColorAnim;
+	public Animator newColorTextAnim;
 	//Hint Blocks Variables
 	public RectTransform hintBlocksPanel;
 	private Image[] hintBlockImages;
@@ -63,6 +75,7 @@ public class SelectionManager : MonoBehaviour
 	float defaultCellSizeY = 64;
 	#endregion
 
+	#region Unity MonoBehaviours -------------------------------------------------------------------------------------------------------------------------------
 	void Awake()
 	{
 		#region safecheck
@@ -71,9 +84,9 @@ public class SelectionManager : MonoBehaviour
 						  "\nDifficulty Color Count = " + colorBase.GetTotalDifficulty() + "\nFix Difficulty Brackets Size in " + gameObject.name +
 						  " or Add/Deduct Difficulty Colors in " + colorBase.ToString() + " class");
 		#endregion
-
+		Constants.RowCount = gridSize.X;
+		Constants.ColumnCount = gridSize.Y;
 		ColorBase.defaultColor = defaultBlockColor;
-
 		newBlockImages = newBlocksPanel.GetComponentsInChildren<Image>();
 		hintBlockImages = hintBlocksPanel.GetComponentsInChildren<Image>();
 		//disable all hintBlockImages when game starts
@@ -100,7 +113,20 @@ public class SelectionManager : MonoBehaviour
 		#endregion
 	}
 
-	#region Save & Load Operations-------------------------------------------------------------------------------------------------------------------------------
+	void Update()
+	{
+		//Score Text Animation
+		if (isScoreIncreased)
+		{
+			score = Utilities.IntLerp(score, updatedScore, 0.03f);
+			scoreText.text = score.ToString();
+			if (score == updatedScore)
+				isScoreIncreased = false;
+		}
+	}
+	#endregion
+
+	#region Save & Load Operations -------------------------------------------------------------------------------------------------------------------------------
 	public void FillBlocksArray(BlocksArray loadedBlocks, List<BlockInfo> currentBlockInfos)
 	{
 		if (loadedBlocks != null)
@@ -124,12 +150,24 @@ public class SelectionManager : MonoBehaviour
 		}
 		return blocks;
 	}
+
+	private void CreateNewBlocksFromSave(List<BlockInfo> blockInfos)
+	{
+		newBlocks = blockInfos;
+		newBlockImages = ProcessBlocks(newBlockImages, newBlocks);
+	}
+	public void CreateHintBlocksFromSave(List<BlockInfo> blockInfos)
+	{
+		hintBlocks = blockInfos;
+		hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks);
+	}
+
 	public BlocksArray GetBlocksArray() { return blocks; }
 
 	public GameVariables GetGameVariables()
 	{
 		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true : false;
-		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, isHammerUsed, isHintUsed);
+		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed);
 	}
 
 	public void SetGameVariables(GameVariables gameVariables)
@@ -138,13 +176,21 @@ public class SelectionManager : MonoBehaviour
 		UpdateHighScore(gameVariables.highScore);
 		difficultyCounter = gameVariables.difficultyCounter;
 		currentDifficultyBracket = gameVariables.currentDifficultyBracket;
+		gameState = (GameState)gameVariables.gameStateIndex;
+
 		if (gameVariables.isHammerUsed)
 			HammerPowerUp();
 		isHintUsed = gameVariables.isHintUsed;
 		colorBase.IncreaseDifficulty(currentDifficultyBracket);
+		if (gameState == GameState.GameOver)
+		{
+			gameOverEvent.Invoke();
+		}
 
 	}
 	#endregion
+
+	#region Grid Management & Block Creation -------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
 	/// Generates a Board with prearranged Row and Column count(See Constants class) and assigns them to [blocks] 2D array.
 	/// </summary>
@@ -272,16 +318,6 @@ public class SelectionManager : MonoBehaviour
 		}
 
 	}
-	private void CreateNewBlocksFromSave(List<BlockInfo> blockInfos)
-	{
-		newBlocks = blockInfos;
-		newBlockImages = ProcessBlocks(newBlockImages, newBlocks);
-	}
-	public void CreateHintBlocksFromSave(List<BlockInfo> blockInfos)
-	{
-		hintBlocks = blockInfos;
-		hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks);
-	}
 	/// <summary>
 	/// Update images' colors with given blocksInfo
 	/// </summary>
@@ -304,6 +340,8 @@ public class SelectionManager : MonoBehaviour
 		//	StartCoroutine(ActiveBlocksWithDelay(blockImages, blocksInfo.Count));
 		return blockImages;
 	}
+	#endregion
+
 	//Sequential new block enabling, did not like it. So it is deactivated.-------------------------------------------------------------------------------------------------------------------------------
 	//Activate below and above lines and deactivate "blockImages[i].gameObject.SetActive(true);" on above to see changes.
 	//private int activateBlockIndex;
@@ -348,18 +386,6 @@ public class SelectionManager : MonoBehaviour
 		selectedBlock.SetColor(newBlocks[selectionCount].BlockColor.GetColor());//Set color of selected block to queued new block
 		blocksPlaced.Add(selectedBlock); // add currently selected block to the list of placed blocks(we will need it later)
 		selectionCount++; // increase the selection count so next time the queued block will be placed
-	}
-
-	/// <summary>
-	/// Remove a single block from the grid.
-	/// </summary>
-	/// <param name="selectedBlock">Block to be removed.</param>
-	private void RemoveBlock(Block selectedBlock)
-	{
-		selectedBlock.Clear(); // remove it's colors
-		SoundManager.Instance.PlayHammerPowerUp();
-		gameState = GameState.Idle;
-		hammerUsedEvent.Invoke();
 	}
 
 	/// <summary>
@@ -433,27 +459,7 @@ public class SelectionManager : MonoBehaviour
 			}
 			else // player placed all of given blocks to grid
 			{
-				SoundManager.Instance.ResetPlaceBlockPitch();
-				
-
-				if (blocks.CheckAdjacentBlocks(blocksPlaced)) // send placed block list for adjacency check and if there are any 3 or more adjacent block found
-				{
-					ExplodeBlocks(); // explode blocks if there are any
-				}
-
-				CreateBlocks(BlockCreationType.Actual); // create new blocks to continue the game
-
-				if (blocks.CheckEmptyBlocks(newBlocks.Count)) // Use this method after creating blocks!
-					gameState = GameState.Idle;
-				else // game over here
-				{
-					gameState = GameState.GameOver;
-					gameOverEvent.Invoke();
-
-					Animator boardAnimator = gamePanel.GetComponent<Animator>();
-					boardAnimator.SetTrigger("gameOver");
-					SoundManager.Instance.PlayGameOver();
-				}
+				AppendSelection();
 
 			}
 			//regardless of the conditions above, the player is released fingers
@@ -463,7 +469,30 @@ public class SelectionManager : MonoBehaviour
 			blocksPlaced.Clear();
 		}
 	}
+	/// <summary>
+	/// Stuff to do when player places blocks to grid
+	/// </summary>
+	private void AppendSelection()
+	{
+		SoundManager.Instance.ResetPlaceBlockPitch();
 
+		if (blocks.CheckAdjacentBlocks(blocksPlaced)) // send placed block list for adjacency check and if there are any 3 or more adjacent block found
+			ExplodeBlocks(); // explode blocks if there are any
+
+		CreateBlocks(BlockCreationType.Actual); // create new blocks to continue the game
+
+		if (blocks.CheckEmptyBlocks(newBlocks.Count)) // Use this method after creating blocks!
+			gameState = GameState.Idle;
+		else // game over here
+		{
+			gameState = GameState.GameOver;
+			gameOverEvent.Invoke();
+
+			Animator boardAnimator = gamePanel.GetComponent<Animator>();
+			boardAnimator.SetTrigger("gameOver");
+			SoundManager.Instance.PlayGameOver();
+		}
+	}
 	public void ClearSelection()
 	{
 		currentBlock = null;
@@ -471,7 +500,7 @@ public class SelectionManager : MonoBehaviour
 	}
 
 	/// <summary>
-	/// Removes adjacent blocks, calculates score.
+	/// Removes adjacent blocks, calculates score, shows combo.
 	/// </summary>
 	private void ExplodeBlocks()
 	{
@@ -498,6 +527,13 @@ public class SelectionManager : MonoBehaviour
 				adjacentBlock.Clear(); // explode blocks(set their color to white etc.)
 			}
 		}
+		// if player does combo, show it
+		if (matchedBlocksList.Count > 1)
+		{
+			comboText.text = "x" + matchedBlocksList.Count.ToString();
+			comboText.GetComponent<Animator>().SetTrigger("combo");
+		}
+
 		//SetScore(updatedScore)
 		ControlDifficulty();
 		AddToScore(totalScore);
@@ -516,7 +552,9 @@ public class SelectionManager : MonoBehaviour
 				currentDifficultyBracket++; //increase our current bracket
 				difficultyCounter = 0; //reset our counter
 				colorBase.IncreaseDifficulty();// add another color in our color pool
-				print("NEW COLOR!");
+				newColorAnim.GetComponent<Image>().color = colorBase.GetLatestColor();
+				newColorAnim.SetTrigger("newColor");
+				newColorTextAnim.SetTrigger("shadow");
 			}
 		}
 	}
@@ -529,29 +567,12 @@ public class SelectionManager : MonoBehaviour
 	}
 #endregion
 
-	/// <summary>
-	/// Starts floating text animation for every block that is going to be exploded.
-	/// </summary>
-	/// <param name="block">block to be exploded.</param>
-	/// <param name="points">points to be shown.</param>
-	private void StartTextAnimation(Block block, int points)
-	{
-		Animator an = block.GetComponentInChildren<Animator>();
-		Text tx = block.GetComponentInChildren<Text>();
-		tx.color = block.info.BlockColor.GetColor();
-		tx.text = "+" + points.ToString();
-		an.SetTrigger("startFloat");
-	}
 	#region PowerUp Section-------------------------------------------------------------------------------------------------------------------------------
 	public void HammerPowerUp()// called from Hammer Button
 	{
 		//only enable hammer power up button to be clicked if there are any colored blocks exist in grid
 		if (gameState == GameState.Idle)
-		{
-			if (IsAnyColoredBlockExist())
-				gameState = GameState.HammerPowerUp;
-		}
-
+			ProcessHammerPowerUp(true);
 	}
 
 	public void HintPowerUp()// called from Hint Button
@@ -568,31 +589,44 @@ public class SelectionManager : MonoBehaviour
 		if (gameState == GameState.Idle)
 			CreateBlocks(BlockCreationType.Actual);
 	}
+
 	/// <summary>
 	/// Checks whole grid to see if there are any colored block exists, terminates check immeditely when it founds a colored block
 	/// </summary>
 	/// <returns></returns>
-	private bool IsAnyColoredBlockExist() // this check is needed for hammer powerup
+	public void ProcessHammerPowerUp(bool isActivate) // this check is needed for hammer powerup
 	{
-		bool rBool = false;
+		bool isAnyColoredBlockExist = false;
 		for (int i = 0; i < Constants.ColumnCount; i++)
 		{
-			if (rBool)
-				break;
 			for (int j = 0; j < Constants.RowCount; j++)
 			{
 				if (blocks[j, i].GetComponent<Block>().info.BlockColor.GetColor() != ColorBase.defaultColor) // if color of block is not white
 				{
-					rBool = true;
-					break;
+					blocks[j, i].GetComponent<Block>().hammerImage.SetActive(isActivate);
+					isAnyColoredBlockExist = true;
 				}
 			}
 		}
-		return rBool;
+		if (isAnyColoredBlockExist && isActivate) gameState = GameState.HammerPowerUp;
+	}
+
+	/// <summary>
+	/// Remove a single block from the grid.
+	/// </summary>
+	/// <param name="selectedBlock">Block to be removed.</param>
+	private void RemoveBlock(Block selectedBlock)
+	{
+		ProcessHammerPowerUp(false);
+		selectedBlock.Clear(); // remove it's colors
+		SoundManager.Instance.PlayHammerPowerUp();
+		gameState = GameState.Idle;
+		hammerUsedEvent.Invoke();
 	}
 	#endregion
+
 	#region Score section-------------------------------------------------------------------------------------------------------------------------------
-	
+
 
 	/// <summary>
 	/// Sets score either with animation or directly.
@@ -640,6 +674,12 @@ public class SelectionManager : MonoBehaviour
 	}
 	#endregion
 
+	#region Animations -------------------------------------------------------------------------------------------------------------------------------
+	/// <summary>
+	/// Updates new blocks animation according to condition.
+	/// </summary>
+	/// <param name="blockGO">GameObject of block to be updated.</param>
+	/// <param name="isPlaced">if is block put on grid or retrieved from it.</param>
 	void UpdateNewBlocksAnimation(GameObject blockGO, bool isPlaced)
 	{
 		Animator anim = blockGO.GetComponent<Animator>();
@@ -648,21 +688,21 @@ public class SelectionManager : MonoBehaviour
 			anim.SetBool("shrink", isPlaced);
 		}
 	}
-	IEnumerator AnimationSlightDelay(GameObject blockGO, bool isPlaced)
-	{
-		yield return new WaitForSeconds(5);
-		UpdateNewBlocksAnimation(blockGO, isPlaced);
-	}
 
-	void Update()
+	/// <summary>
+	/// Starts floating text animation for every block that is going to be exploded.
+	/// </summary>
+	/// <param name="block">block to be exploded.</param>
+	/// <param name="points">points to be shown.</param>
+	private void StartTextAnimation(Block block, int points)
 	{
-		//Score Text Animation
-		if (isScoreIncreased)
-		{
-			score = Utilities.IntLerp(score, updatedScore, 0.03f);
-			scoreText.text = score.ToString();
-			if (score == updatedScore)
-				isScoreIncreased = false;
-		}
+		Animator an = block.GetComponentInChildren<Animator>();
+		Text tx = block.GetComponentInChildren<Text>();
+		tx.color = block.info.BlockColor.GetColor();
+		tx.text = "+" + points.ToString();
+		an.SetTrigger("startFloat");
 	}
+	#endregion
+
+	
 }

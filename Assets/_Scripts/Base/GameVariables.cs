@@ -15,16 +15,18 @@ public class GameVariables {
 	public int highScore;
 	public int difficultyCounter;
 	public int currentDifficultyBracket;
+	public int gameStateIndex;
 	public bool isHammerUsed;
 	public bool isHintUsed;
-
-	public GameVariables(int _score, int _highScore, int _difficultyCounter, int _currentDifficultyBracket, bool _isHammerUsed, bool _isHintUsed)
+	public GameVariables(int _score, int _highScore, int _difficultyCounter, int _currentDifficultyBracket, int _gameStateIndex, bool _isHammerUsed, bool _isHintUsed)
 	{
 		score = _score;
 		highScore = _highScore;
 		difficultyCounter = _difficultyCounter;
 		currentDifficultyBracket = _currentDifficultyBracket;
+		gameStateIndex = _gameStateIndex;
 		isHammerUsed = _isHammerUsed;
 		isHintUsed = _isHintUsed;
+
 	}
 }
