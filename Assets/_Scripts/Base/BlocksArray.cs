@@ -214,11 +214,11 @@ public class BlocksArray
 			#endregion
 			//... so if we have 2 new blocks, this piece of code enables us to terminate looking for adjacent empty blocks
 			// just as it finds 2 empty adjacent blocks, this saves us from looping 20 times if there are 20 adjacent empty blocks
-			bool stopCheck = false;
-			if (isWhiteBlockCheck && adjacentBlocksWithSameColor.Count >= adjacentBlockCount) //a bit of injection but eh, it works.
-				stopCheck = true;
+			//bool stopCheck = false;
+			//if (isWhiteBlockCheck && adjacentBlocksWithSameColor.Count >= adjacentBlockCount) //a bit of injection but eh, it works.
+			//	stopCheck = true;
 
-			if (adjacencyIndex < adjacentBlocksWithSameColor.Count && !stopCheck) //continue only if there are more blocks to check | see previous comments for stopCheck
+			if (adjacencyIndex < adjacentBlocksWithSameColor.Count) //continue only if there are more blocks to check | see previous comments for stopCheck
 				Check3Match(adjacentBlocksWithSameColor[adjacencyIndex], isWhiteBlockCheck, adjacentBlockCount); //recursive!
 
 			else if(adjacentBlocksWithSameColor.Count >= adjacentBlockCount) // if there are no more blocks to check, check if adjacent blocks are more than given block Count
@@ -287,11 +287,13 @@ public class BlocksArray
 			if (!emptyBlocks[i].IsChecked) // skip already checked blocks
 			{
 				Check3Match(emptyBlocks[i], true, newBlocksCount); // this is a white block check so flag it and give custom block count to check accordingly and avoid overstoring!
+				//Check3Match only adds to matchedBlockLists if there are more equal or more adjacent blocks than newBlocksCount
 			}
-			//our matchedBlockLists should be filled with atleast one block of adjacent white blocks
-			//so check if their count is bigger or equal than our newBlockCount
-			//note that this check only works if our newBlockCount smaller than 4(because different condition appears after 4, see encapsulated comment for more info)
-			if (matchedBlockLists != null)
+		}
+		//our matchedBlockLists should be filled with atleast one block of adjacent white blocks
+		//so check if their count is bigger or equal than our newBlockCount
+		//note that this check only works if our newBlockCount smaller than 4(because different condition appears after 4, see encapsulated comment for more info)
+		if (matchedBlockLists.Count != 0) //if we have some elements to test
 			{
 				foreach (List<Block> adjacentBlockList in matchedBlockLists)
 				{
@@ -313,12 +315,11 @@ public class BlocksArray
 					if (adjacentBlockList.Count >= newBlocksCount + additionalCount) // if there are enough empty blocks for user to place new blocks
 					{
 						rBool = true; //new blocks can be placed to grid
-						i = emptyBlocks.Count; // we want to leave from outer loop too
 						break; // this leaves from foreach loop
 					}
 				}
 			}
-		}
+
 		//so far we are ok as long as we get less than 4 blocks, we can control our grid properly by using our Check3Match method to see adjacent empty blocks
 		//but if we get 4 blocks, there is a certain pattern that there is 4 adjacent empty blocks exist(which our code can detect) but we can't place our 4 blocks
 		//in this pattern, consider following example.
@@ -342,7 +343,7 @@ public class BlocksArray
 		#endregion
 		if (!rBool && newBlocksCount >= 4) //only do this if rBool is not true and our newBlocksCount is bigger than 4
 		{
-			if (matchedBlockLists != null)
+			if (matchedBlockLists.Count != 0) // if we have some elements to test
 			{
 				//Send every block info in every block list to check their patterns
 				foreach (List<Block> adjacentBlockList in matchedBlockLists)
@@ -381,6 +382,7 @@ public class BlocksArray
 
 	int nothingAddedCount = 0; // if nothing is added to our adjacentBlocksWithSameColor list for 2 times we terminate recursive method.
 	bool emptySpaceAvailable = false; // this bool needs to be global in order for CheckEmptyBlocks to see if this method found any pattern that 4 blocks can be placed into.
+	List<BlockInfo> removedBlocks = new List<BlockInfo>();
 	//The reason we cannot use Check3Match method to see all white blocks is that
 	//There is a specific pattern where Check3Match method can't handle properly
 	//See for visualisation of that pattern below:
@@ -404,10 +406,12 @@ public class BlocksArray
 	private void AdvancedEmptyBlockCheck(BlockInfo blockInfo, int newBlocksCount)
 	{
 		Color blockColor = blockInfo.BlockColor.GetColor();
+		int consequentCount = adjacentBlocksWithSameColor.Count;
 		if (!adjacentBlocksWithSameColor.Contains(blockInfo))
 			adjacentBlocksWithSameColor.Add(blockInfo);
 
 		bool isSingleBlockAdded = false; // we want to add single block at a time per run(this way we can ensure code will look for a single path)
+		bool isAdjacentToDeadEndBlock = false;
 		//then control adjacent blocks and add to list if there are any same colors.
 		if (blockInfo.Row != Constants.RowCount - 1 && !isSingleBlockAdded)
 		{
@@ -417,6 +421,7 @@ public class BlocksArray
 				adjacentBlocksWithSameColor.Add(checkBlock); // add it to our array
 				isSingleBlockAdded = true;
 			}
+			else if (checkBlock.IsDeadEnd) isAdjacentToDeadEndBlock = true;
 		}
 		if (blockInfo.Row != 0 && !isSingleBlockAdded)
 		{
@@ -426,6 +431,7 @@ public class BlocksArray
 				adjacentBlocksWithSameColor.Add(checkBlock);
 				isSingleBlockAdded = true;
 			}
+			else if (checkBlock.IsDeadEnd) isAdjacentToDeadEndBlock = true;
 		}
 		if (blockInfo.Column != Constants.ColumnCount - 1 && !isSingleBlockAdded)
 		{
@@ -435,6 +441,7 @@ public class BlocksArray
 				adjacentBlocksWithSameColor.Add(checkBlock);
 				isSingleBlockAdded = true;
 			}
+			else if (checkBlock.IsDeadEnd) isAdjacentToDeadEndBlock = true;
 		}
 		if (blockInfo.Column != 0 && !isSingleBlockAdded)
 		{
@@ -444,18 +451,21 @@ public class BlocksArray
 				adjacentBlocksWithSameColor.Add(checkBlock);
 				isSingleBlockAdded = true;
 			}
+			else if (checkBlock.IsDeadEnd) isAdjacentToDeadEndBlock = true;
 		}
-		if (adjacentBlocksWithSameColor.Count > 1) // if any adjacent same color blocks found
-		{
+		if (consequentCount != adjacentBlocksWithSameColor.Count) // if any blocks added to list
+			nothingAddedCount = 0; // reset our counter
+		//if (adjacentBlocksWithSameColor.Count > 1) // if any adjacent same color blocks found
+		//{
 			adjacencyIndex++; // block is checked so increase index
 
-			if (adjacencyIndex < adjacentBlocksWithSameColor.Count) //continue only if there are more blocks to check 
-				AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacencyIndex], newBlocksCount); //recursive!
-			else if (adjacentBlocksWithSameColor.Count >= newBlocksCount) // if there are no more blocks to check, check if adjacent blocks are more than given block Count
+			if (adjacentBlocksWithSameColor.Count >= newBlocksCount) // if there are no more blocks to check, check if adjacent blocks are more than given block Count
 			{
 				emptySpaceAvailable = true;
 				PrepareForNextIteration(); // this clears all temporary lists and index
 			}
+			else if (adjacencyIndex < adjacentBlocksWithSameColor.Count) //continue only if there are more blocks to check 
+				AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacencyIndex], newBlocksCount); //recursive!
 			else // if there are no more blocks to check and collected adjacent blocks are less than newBlocksCount
 			{
 				//This place of code indicates that we are at a "dead end" so we need to flag this block as dead end and
@@ -463,21 +473,28 @@ public class BlocksArray
 				if (nothingAddedCount < 2)
 				{
 					nothingAddedCount++;
-					blockInfo.IsDeadEnd = true; // flag it as deadend
-					adjacencyIndex = adjacentBlocksWithSameColor.Count - 1;
+				//blockInfo.IsDeadEnd = true; // flag it as deadend
+				if (isAdjacentToDeadEndBlock)
+				{
+					adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1].IsDeadEnd = true;
+                    removedBlocks.Add(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1]);
 					adjacentBlocksWithSameColor.RemoveAt(adjacentBlocksWithSameColor.Count - 1);
-
-					AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1], newBlocksCount);
+					adjacencyIndex = adjacentBlocksWithSameColor.Count - 1;
+				}
+				AdvancedEmptyBlockCheck(adjacentBlocksWithSameColor[adjacentBlocksWithSameColor.Count - 1], newBlocksCount);
 				}
 				else // if nothing is added for 2 turns(referenced empty block's every possible path is calculated)
 				{
-					for (int i = 0; i < adjacentBlocksWithSameColor.Count; i++)
-						adjacentBlocksWithSameColor[i].IsDeadEnd = false; // clear IsDeadEnd flags for next block's path calculation
+					foreach (BlockInfo block in adjacentBlocksWithSameColor)
+						block.IsDeadEnd = false;
+					foreach (BlockInfo block in removedBlocks)
+						block.IsDeadEnd = false;
+					removedBlocks.Clear();
 					PrepareForNextIteration();
 					nothingAddedCount = 0;
 				}
 			}
-	}
+	//}
 }
 	#endregion
 }

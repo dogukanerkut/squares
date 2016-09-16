@@ -25,8 +25,8 @@ public class ColorBase
 	public void ResetToDefault()
 	{
 		currentColors.Clear();
-		//currentColors.Add(ConvertTo1(179, 255, 135)); // green
-		currentColors.Add(Color.green);
+		currentColors.Add(ConvertTo1(179, 255, 135)); // green
+		//currentColors.Add(Color.green);
 		currentColors.Add(ConvertTo1(116, 255, 255)); // blue
 		currentColors.Add(ConvertTo1(127, 54, 255)); // purple
 

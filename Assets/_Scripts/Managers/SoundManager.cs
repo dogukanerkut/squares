@@ -24,6 +24,7 @@ public class SoundManager : MonoBehaviour {
 			return instance;
 		}
 	}
+	public bool isSoundsActive;
 	public AudioSource placeBlock;
 
 	[Range(0f,.5f)]
@@ -35,50 +36,57 @@ public class SoundManager : MonoBehaviour {
 	public AudioSource buttonClick;
 	public AudioSource hammerPowerUp;
 	public AudioSource hintPowerUp;
+
 	private void IncreasePlaceBlockPitch()
 	{
-		placeBlock.pitch += placeBlockPitchRate;
+		if(isSoundsActive)	placeBlock.pitch += placeBlockPitchRate;
 	}
 	private void DecreasePlaceBlockPitch()
 	{
-		placeBlock.pitch -= placeBlockPitchRate;
+		if (isSoundsActive) placeBlock.pitch -= placeBlockPitchRate;
 	}
 	public void ResetPlaceBlockPitch()
 	{
-		placeBlock.pitch = 1;
+		if (isSoundsActive) placeBlock.pitch = 1;
 	}
 	public void PlayPlaceBlock()
 	{
-		placeBlock.Play();
+		if (isSoundsActive)
+		{
+			placeBlock.Play();
 		IncreasePlaceBlockPitch();
+		}
 	}
 	public void PlayRetrieveBlock()
 	{
-		retrieveBlock.Play();
-		DecreasePlaceBlockPitch();
+		if (isSoundsActive)
+		{
+			retrieveBlock.Play();
+			DecreasePlaceBlockPitch();
+		}
 	}
 	public void PlayBlockExplode()
 	{
-		blockExplode.Play();
+		if (isSoundsActive) blockExplode.Play();
 	}
 	public void PlayBlockExplodeCombo()
 	{
-		blockExplodeCombo.Play();
+		if (isSoundsActive) blockExplodeCombo.Play();
 	}
 	public void PlayGameOver()
 	{
-		gameOver.Play();
+		if (isSoundsActive) gameOver.Play();
 	}
 	public void PlayButtonClick()
 	{
-		buttonClick.Play();
+		if (isSoundsActive) buttonClick.Play();
 	}
 	public void PlayHammerPowerUp()
 	{
-		hammerPowerUp.Play();
+		if (isSoundsActive) hammerPowerUp.Play();
 	}
 	public void PlayHintPowerUp()
 	{
-		hintPowerUp.Play();
+		if (isSoundsActive) hintPowerUp.Play();
 	}
 }

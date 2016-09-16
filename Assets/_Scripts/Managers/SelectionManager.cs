@@ -143,10 +143,19 @@ public class SelectionManager : MonoBehaviour
 				tempBlock.GetComponent<Block>().FillInfo(j, i, ColorBase.defaultColor); //Set object's row and column
 			}
 		}
-		//blocks[1, 1].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[2, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[2, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[3, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		////blocks[2, 4].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[0, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1,2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1, 4].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+
+		//blocks[0, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[1, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[2, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
+		//blocks[3, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[3, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[1, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		//blocks[1, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
