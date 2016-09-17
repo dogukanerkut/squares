@@ -14,7 +14,6 @@ public class BlocksCreator
 {
 	public List<BlockInfo> GetRandomBlocks()
 	{
-		//tryout
 		List<BlockInfo> blockGroup;
 		int random = Random.Range(0, 100); // chance for getting one or four blocks OR two or three blocks.
 

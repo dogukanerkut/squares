@@ -11,11 +11,16 @@ using System.Collections.Generic;
 /// </summary>
 public static class SaveLoad
 {
-	private static string savePath = Application.persistentDataPath + "/gamesave.data";
-
+	private static string savePath = Application.persistentDataPath + "/gamesave.data"; // in android this requires external card permission
+	/// <summary>
+	/// Saves the current session of the game
+	/// </summary>
+	/// <param name="gridBlockInfos">Current grid state.</param>
+	/// <param name="currentBlockInfos">Current new blocks.</param>
+	/// <param name="gameVariables">Game variables.</param>
+	/// <param name="hintBlocks">List of hint blocks</param>
 	public static void SaveGame(BlockInfo[,] gridBlockInfos, List<BlockInfo> currentBlockInfos, GameVariables gameVariables, List<BlockInfo> hintBlocks)
 	{
-		//List<BlockInfo> blocks = new List<BlockInfo>();
 		BinaryFormatter bf = new BinaryFormatter();
 		FileStream fs = new FileStream(savePath, FileMode.OpenOrCreate);
 		bf.Serialize(fs, gridBlockInfos);
@@ -24,7 +29,11 @@ public static class SaveLoad
 		bf.Serialize(fs, hintBlocks);
 		fs.Close();
 	}
-
+	/// <summary>
+	/// Load the saved game.
+	/// </summary>
+	/// <param name="position">FileStream's current position</param>
+	/// <returns></returns>
 	public static object LoadGame(ref long position)
 	{
 		object obj = null;

@@ -96,9 +96,12 @@ public class BoardManager : MonoBehaviour
 						  "\nDifficulty Color Count = " + colorBase.GetTotalDifficulty() + "\nFix Difficulty Brackets Size in " + gameObject.name +
 						  " or Add/Deduct Difficulty Colors in " + colorBase.ToString() + " class");
 		#endregion
-		Constants.RowCount = gridSize.X;
+		//set grid size taken from editor
+		Constants.RowCount = gridSize.X; 
 		Constants.ColumnCount = gridSize.Y;
+		//set default block color taken from editor
 		ColorBase.defaultColor = defaultBlockColor;
+
 		newBlockImages = newBlocksPanel.GetComponentsInChildren<Image>();
 		hintBlockImages = hintBlocksPanel.GetComponentsInChildren<Image>();
 		//disable all hintBlockImages when game starts
@@ -107,7 +110,9 @@ public class BoardManager : MonoBehaviour
 			img.gameObject.SetActive(false);
 		}
 		gameState = GameState.Idle;
+
 		GenerateBoard();
+
 		GridLayoutGroup gamePanelGLG = gamePanel.GetComponent<GridLayoutGroup>();
 		gamePanelGLG.constraintCount = Constants.RowCount; // if grid size is changed, adjust constrain count accordingly
 
@@ -140,6 +145,11 @@ public class BoardManager : MonoBehaviour
 	#endregion
 
 	#region Save & Load Operations -------------------------------------------------------------------------------------------------------------------------------
+	/// <summary>
+	/// Fill our blocks from saved data
+	/// </summary>
+	/// <param name="loadedBlocks">Saved BlocksArray</param>
+	/// <param name="currentBlockInfos">Saved block infos</param>
 	public void FillBlocksArray(BlocksArray loadedBlocks, List<BlockInfo> currentBlockInfos)
 	{
 		if (loadedBlocks != null)
@@ -147,6 +157,11 @@ public class BoardManager : MonoBehaviour
 		if (currentBlockInfos != null)
 			CreateNewBlocksFromSave(currentBlockInfos);
 	}
+	/// <summary>
+	/// Sends newly created blocks or hint blocks to save them
+	/// </summary>
+	/// <param name="type"></param>
+	/// <returns></returns>
 	public List<BlockInfo> GetBlocks(BlockCreationType type)
 	{
 		List<BlockInfo> blocks = new List<BlockInfo>();
@@ -163,12 +178,19 @@ public class BoardManager : MonoBehaviour
 		}
 		return blocks;
 	}
-
+	/// <summary>
+	/// After filling new blocks, transfer them to our game(load them)
+	/// </summary>
+	/// <param name="blockInfos">List of new blocks from saved data</param>
 	private void CreateNewBlocksFromSave(List<BlockInfo> blockInfos)
 	{
 		newBlocks = blockInfos;
 		newBlockImages = ProcessBlocks(newBlockImages, newBlocks);
 	}
+	/// <summary>
+	/// After filling hint blocks, transfer them to our game(load them)
+	/// </summary>
+	/// <param name="blockInfos">List of new blocks from saved data</param>
 	public void CreateHintBlocksFromSave(List<BlockInfo> blockInfos)
 	{
 		hintBlocks = blockInfos;
@@ -176,13 +198,20 @@ public class BoardManager : MonoBehaviour
 	}
 
 	public BlocksArray GetBlocksArray() { return blocks; }
-
+	/// <summary>
+	/// Prepare a list of our game variables wrapped in a class for saving.
+	/// </summary>
+	/// <returns></returns>
 	public GameVariables GetGameVariables()
 	{
 		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true : false;
 		return new GameVariables(updatedScore, highScore, diamondBank, matchCount, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed, SoundManager.Instance.isSoundsActive);
 	}
 
+	/// <summary>
+	/// Distribute our
+	/// </summary>
+	/// <param name="gameVariables"></param>
 	public void SetGameVariables(GameVariables gameVariables)
 	{
 		SetScore(gameVariables.score, false);

@@ -11,8 +11,8 @@ public class ColorBase
 {
 	private List<Color> currentColors = new List<Color>();
 	private List<Color> difficultyColors = new List<Color>();
-	public static Color defaultColor = Color.white; // default is white unless it is modified somewhere
-	private bool isDifficultyJustIncreased;
+	public static Color defaultColor = Color.white; // default is white unless it is modified in BoardManager
+	private bool isDifficultyJustIncreased; 
 	public ColorBase()
 	{
 		ResetToDefault();
@@ -22,17 +22,6 @@ public class ColorBase
 	/// </summary>
 	public void ResetToDefault()
 	{
-		//currentColors.Clear();
-		//currentColors.Add(ConvertTo1(179, 255, 135)); // green
-		//currentColors.Add(ConvertTo1(116, 255, 255)); // blue
-		//currentColors.Add(ConvertTo1(127, 54, 255)); // purple
-
-		//difficultyColors.Clear();
-		//difficultyColors.Add(ConvertTo1(201, 25, 96)); // red-ish
-		//difficultyColors.Add(ConvertTo1(246, 255, 96)); // yellow
-		//difficultyColors.Add(ConvertTo1(255, 105, 24)); // orange
-		//difficultyColors.Add(ConvertTo1(245, 148, 255)); // pink
-		//difficultyColors.Add(ConvertTo1(62, 62, 62)); // black-ish
 		currentColors.Clear();
 		currentColors.Add(ConvertTo1(164, 243, 11)); // green
 		currentColors.Add(ConvertTo1(62, 199, 191)); // blue
@@ -45,7 +34,9 @@ public class ColorBase
 		difficultyColors.Add(ConvertTo1(183, 37, 199)); // pink
 		difficultyColors.Add(ConvertTo1(41, 41, 41)); // black-ish
 	}
-
+	/// <summary>
+	/// Increases Difficulty of the game(adds another color in our color pool
+	/// </summary>
 	public void IncreaseDifficulty()
 	{
 		if (difficultyColors.Count > 0)
@@ -55,21 +46,27 @@ public class ColorBase
 			isDifficultyJustIncreased = true;
 		}
 	}
+	/// <summary>
+	/// This is for loading game, we need to iterate our difficulty brackets to reach the difficulty level our loaded game.
+	/// </summary>
+	/// <param name="difficultyBracket">Difficulty bracket.</param>
 	public void IncreaseDifficulty(int difficultyBracket)
 	{
 		for (int i = 0; i < difficultyBracket; i++)
 			IncreaseDifficulty();
 	}
 
+	/// <summary>
+	/// Fills color of given list of block infos randomly, preventing to have 4 blocks with same color and makes sure to include the new color if difficulty is just increased
+	/// </summary>
+	/// <param name="blockInfos"></param>
 	public void FillColorInfo(List<BlockInfo> blockInfos)
 	{
 		for (int i = 0; i < blockInfos.Count; i++)
 		{
 			blockInfos[i].BlockColor = new SerializableColor(GetRandomColor());
 		}
-		//include new color if it's not added to new blocks
-
-
+		//if blocks are 4 or more, look if all blocks are same color 
 		if (blockInfos.Count >= 4)
 		{
 			bool isAllBlocksSameColor = true;
@@ -87,7 +84,10 @@ public class ColorBase
 		}
 		//return blockInfos;
 	}
-
+	/// <summary>
+	/// If the difficulty is just increased, include the override introduced color to one of our blocks if the blocks do not contain it.
+	/// </summary>
+	/// <param name="blockInfos"></param>
 	private void IncludeNewColorOnFirstTime(List<BlockInfo> blockInfos)
 	{
 		if (isDifficultyJustIncreased)
@@ -106,12 +106,17 @@ public class ColorBase
 			isDifficultyJustIncreased = false;
 		}
 	}
+	/// <summary>
+	/// Prevents all blocks to be same color if they are more than 4
+	/// </summary>
+	/// <param name="blockInfos"></param>
+	/// <param name="isAllBlocksSameColor">if this is true, we have 4 blocks that all of them are same color</param>
 	private void PreventAllBlocksToBeSameColor(List<BlockInfo> blockInfos, bool isAllBlocksSameColor)
 	{
 		while (isAllBlocksSameColor) // while all blocks are same color
 		{
 			int rnd = Random.Range(0, blockInfos.Count - 1);
-			blockInfos[rnd].BlockColor = new SerializableColor(GetRandomColor());
+			blockInfos[rnd].BlockColor = new SerializableColor(GetRandomColor()); // assign a random color to a random block
 			for (int i = 0; i < blockInfos.Count; i++)
 			{
 				if (blockInfos[0].BlockColor.GetColor() != blockInfos[i].BlockColor.GetColor()) // if even one of them is not same, false allSameColor
