@@ -32,35 +32,34 @@ public class SaveLoadManager : MonoBehaviour
 		if (SaveLoad.IsFileExists())
 		{
 			long position = 0;
-			BlockInfo[,] loadedBlockInfos = (BlockInfo[,])SaveLoad.LoadGame(ref position);
-			List<BlockInfo> currentBlockInfos = (List<BlockInfo>)SaveLoad.LoadGame(ref position);
-			GameVariables gameVariables = (GameVariables)SaveLoad.LoadGame(ref position);
-			List<BlockInfo> hintBlockInfos = (List<BlockInfo>)SaveLoad.LoadGame(ref position);
+			BlockInfo[,] loadedBlockInfos = (BlockInfo[,])SaveLoad.LoadGame(ref position); //Load all blocks in our grid
+			List<BlockInfo> currentBlockInfos = (List<BlockInfo>)SaveLoad.LoadGame(ref position); //Load new blocks
+			GameVariables gameVariables = (GameVariables)SaveLoad.LoadGame(ref position); //Load game variables
+			List<BlockInfo> hintBlockInfos = (List<BlockInfo>)SaveLoad.LoadGame(ref position); //Load hint blocks
 
-			BlocksArray blocksToBeLoaded = boardManager.GetBlocksArray();
+			BlocksArray blocksToBeLoaded = boardManager.GetBlocksArray(); // reference of boardManager's "blocks" we will fill it with loaded data
 
 			for (int i = 0; i < Constants.ColumnCount; i++)
 			{
 				for (int j = 0; j < Constants.RowCount; j++)
 				{
 					Block block = blocksToBeLoaded[j, i].GetComponent<Block>();
-					block.info = loadedBlockInfos[j, i];
-					block.SetColor(loadedBlockInfos[j, i].BlockColor.GetColor());
+					block.info = loadedBlockInfos[j, i]; // fill infos of loaded blocks into current empty blocks
+					block.SetColor(loadedBlockInfos[j, i].BlockColor.GetColor()); // visually update color of block
 				}
 			}
 
-			boardManager.FillBlocksArray(blocksToBeLoaded, currentBlockInfos);
-			boardManager.SetGameVariables(gameVariables);
-			if (gameVariables.isHintUsed)
+			boardManager.FillBlocksArray(blocksToBeLoaded, currentBlockInfos); //Send back loaded grid to BoardManager
+			boardManager.SetGameVariables(gameVariables); //Send loaded game variables to Boardmanager
+			if (gameVariables.isHintUsed) //send hint blocks if used in previous session
 				boardManager.CreateHintBlocksFromSave(hintBlockInfos);
-
 		}
-
 	}
 	private void SaveGame()
 	{
 		if (saveData)
 		{
+			//get all necessary data and save them
 			BlocksArray blocks = boardManager.GetBlocksArray();
 			BlockInfo[,] blockInfosToBeSaved = new BlockInfo[Constants.RowCount, Constants.ColumnCount];
 			GameVariables gameVariables = boardManager.GetGameVariables();
@@ -73,6 +72,7 @@ public class SaveLoadManager : MonoBehaviour
 					//bInfo = loadedBlockInfos[j, i];
 				}
 			}
+			//save all necessary data
 			SaveLoad.SaveGame(blockInfosToBeSaved, boardManager.GetBlocks(BoardManager.BlockCreationType.Actual), gameVariables, boardManager.GetBlocks(BoardManager.BlockCreationType.Hint));
 		}
 	}

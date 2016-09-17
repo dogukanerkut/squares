@@ -28,7 +28,7 @@ public class UIManager : MonoBehaviour
 	// Use this for initialization 
 	public void Awake()
 	{
-		if (SoundManager.Instance.isSoundsActive)
+		if (SoundManager.Instance.areSoundsActive) // swap sprites according to if sounds are active
 			soundImage.sprite = soundSprite;
 		else
 			soundImage.sprite = soundSilencedSprite;
@@ -61,10 +61,10 @@ public class UIManager : MonoBehaviour
 	}
 	public void SoundButton()
 	{
-		if (SoundManager.Instance.isSoundsActive)
+		if (SoundManager.Instance.areSoundsActive)
 			soundImage.sprite = soundSilencedSprite;
 		else
 			soundImage.sprite = soundSprite;
-		SoundManager.Instance.isSoundsActive = !SoundManager.Instance.isSoundsActive;
+		SoundManager.Instance.areSoundsActive = !SoundManager.Instance.areSoundsActive;
     }
 }

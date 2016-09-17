@@ -22,7 +22,7 @@ public class SoundManager : MonoBehaviour {
 			return instance;
 		}
 	}
-	public bool isSoundsActive;
+	public bool areSoundsActive;
 	public AudioSource placeBlock;
 
 	[Range(0f,.5f)]
@@ -39,65 +39,69 @@ public class SoundManager : MonoBehaviour {
 	{
 		#region safecheck
 #if UNITY_EDITOR
-		if (!isSoundsActive) Debug.Log("All sounds are disabled.");
+		if (!areSoundsActive) Debug.Log("All sounds are disabled.");
 #endif
 		#endregion
 
 	}
-	private void IncreasePlaceBlockPitch()
-	{
-		if(isSoundsActive)	placeBlock.pitch += placeBlockPitchRate;
-	}
-	private void DecreasePlaceBlockPitch()
-	{
-		if (isSoundsActive) placeBlock.pitch -= placeBlockPitchRate;
-	}
-	public void ResetPlaceBlockPitch()
-	{
-		if (isSoundsActive) placeBlock.pitch = 1;
-	}
 	public void PlayPlaceBlock()
 	{
-		if (isSoundsActive)
+		if (areSoundsActive)
 		{
 			placeBlock.Play();
 		IncreasePlaceBlockPitch();
 		}
 	}
+
 	public void PlayRetrieveBlock()
 	{
-		if (isSoundsActive)
+		if (areSoundsActive)
 		{
 			retrieveBlock.Play();
 			DecreasePlaceBlockPitch();
 		}
 	}
+	#region Pitch settings
+	private void IncreasePlaceBlockPitch()
+	{
+		if (areSoundsActive) placeBlock.pitch += placeBlockPitchRate;
+	}
+	private void DecreasePlaceBlockPitch()
+	{
+		if (areSoundsActive) placeBlock.pitch -= placeBlockPitchRate;
+	}
+	public void ResetPlaceBlockPitch()
+	{
+		if (areSoundsActive) placeBlock.pitch = 1;
+	}
+#endregion
+
 	public void PlayBlockExplode()
 	{
-		if (isSoundsActive) blockExplode.Play();
+		if (areSoundsActive) blockExplode.Play();
 	}
 	public void PlayBlockExplodeCombo()
 	{
-		if (isSoundsActive) blockExplodeCombo.Play();
+		if (areSoundsActive) blockExplodeCombo.Play();
 	}
 	public void PlayGameOver()
 	{
-		if (isSoundsActive) gameOver.Play();
+		if (areSoundsActive) gameOver.Play();
 	}
 	public void PlayButtonClick()
 	{
-		if (isSoundsActive) buttonClick.Play();
+		if (areSoundsActive) buttonClick.Play();
 	}
 	public void PlayHammerPowerUp()
 	{
-		if (isSoundsActive) hammerPowerUp.Play();
+		if (areSoundsActive) hammerPowerUp.Play();
 	}
 	public void PlayHintPowerUp()
 	{
-		if (isSoundsActive) hintPowerUp.Play();
+		if (areSoundsActive) hintPowerUp.Play();
 	}
 	public void PlayInvalid()
 	{
-		if (isSoundsActive) invalid.Play();
+		if (areSoundsActive) invalid.Play();
 	}
 }

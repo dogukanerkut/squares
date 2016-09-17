@@ -199,19 +199,19 @@ public class BoardManager : MonoBehaviour
 
 	public BlocksArray GetBlocksArray() { return blocks; }
 	/// <summary>
-	/// Prepare a list of our game variables wrapped in a class for saving.
+	/// Prepare a list of game variables wrapped in a class for saving.
 	/// </summary>
 	/// <returns></returns>
 	public GameVariables GetGameVariables()
 	{
 		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true : false;
-		return new GameVariables(updatedScore, highScore, diamondBank, matchCount, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed, SoundManager.Instance.isSoundsActive);
+		return new GameVariables(updatedScore, highScore, diamondBank, matchCount, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed, SoundManager.Instance.areSoundsActive);
 	}
 
 	/// <summary>
-	/// Distribute our
+	/// Distribute a list of game variables wrapped in a class for loading.
 	/// </summary>
-	/// <param name="gameVariables"></param>
+	/// <param name="gameVariables">Loaded game variables class</param>
 	public void SetGameVariables(GameVariables gameVariables)
 	{
 		SetScore(gameVariables.score, false);
@@ -225,7 +225,7 @@ public class BoardManager : MonoBehaviour
 			ProcessHammerPowerUp(true);
 
 		isHintUsed = gameVariables.isHintUsed;
-		SoundManager.Instance.isSoundsActive = gameVariables.isSoundActive;
+		SoundManager.Instance.areSoundsActive = gameVariables.isSoundActive;
 		colorBase.IncreaseDifficulty(currentDifficultyBracket);
 		if (gameState == GameState.GameOver)
 		{
@@ -237,13 +237,12 @@ public class BoardManager : MonoBehaviour
 
 	#region Grid Management -------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
-	/// Generates a Board with prearranged Row and Column count(See Constants class) and assigns them to [blocks] 2D array.
+	/// Generates a Board with Row and Column count and assigns them to [blocks] 2D array and creates new blocks.
 	/// </summary>
 	void GenerateBoard()
 	{
 		blocks = new BlocksArray();
-		//blocks = new GameObject[_row, _column];
-		//Instantiate prefabs and assign them to blocks 2D array.
+		//Instantiate block prefabs and assign them to blocks 2D array.
 		for (int i = 0; i < Constants.ColumnCount; i++)
 		{
 			for (int j = 0; j < Constants.RowCount; j++)
@@ -260,34 +259,9 @@ public class BoardManager : MonoBehaviour
 		if (blockPrefab.GetComponent<Image>().color != Color.white)
 			Debug.LogError("Please set [" + blockPrefab.name + " Prefab]s Color attribute back to white. You can change color of blocks in [" + gameObject.name + " Game Object]'s [Default Block Color] property in Editor." );
 		#endregion
-		//blocks[2, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[2, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[3, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		////blocks[2, 4].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[0, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1,2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1, 4].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-
-		//blocks[0, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[2, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[3, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[3, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[1, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[2, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[2, 1].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[0, 0].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[0, 1].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[0, 2].GetComponent<Block>().SetColor(ColorBase.defaultColor);
-		//blocks[0, 3].GetComponent<Block>().SetColor(ColorBase.defaultColor);
 		CreateBlocks(BlockCreationType.Actual);
 	}
-	//Color RandomColor()
-	//{
-	//	return new Color(Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
-	//}
+
 	/// <summary>
 	/// Resets the board for new game
 	/// </summary>
@@ -324,7 +298,7 @@ public class BoardManager : MonoBehaviour
 	/// <summary>
 	/// Create new blocks, assign their colors and arrange the new block images.
 	/// </summary>
-	/// <param name="type">Actual creates new blocks, Hint creates Hint blocks</param>
+	/// <param name="type">Actual creates new blocks, Hint creates hint blocks</param>
 	void CreateBlocks(BlockCreationType type)
 	{
 		List<BlockInfo> blocksInfo = new List<BlockInfo>();
@@ -346,7 +320,7 @@ public class BoardManager : MonoBehaviour
 		if (isHintUsed) //transfer hintblocks to new blocks
 		{
 			blocksInfo = new List<BlockInfo>(hintBlocks); // create it as new list so we don't reference the hintBlocks and can reset it
-			ClearHintBlocks();
+			ClearHintBlocks(); //we don't need hint blocks lists anymore so clear it
 		}
 		else // create random new blocks  here
 		{
@@ -355,7 +329,7 @@ public class BoardManager : MonoBehaviour
 			colorBase.FillColorInfo(blocksInfo); // color newly introduced blocks randomly
 		}
 		blockImages = ProcessBlocks(blockImages, blocksInfo);
-		switch (type) // push processed blocks back to global holders.
+		switch (type) // push processed blocks back to global holder(whichever it is)
 		{
 			case BlockCreationType.Actual:
 				newBlocks = blocksInfo;
@@ -373,9 +347,10 @@ public class BoardManager : MonoBehaviour
 	private void ClearHintBlocks()
 	{
 		hintBlocks.Clear();
-		hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks); // we don't need hintblocks so disable their image
+		hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks);
 		isHintUsed = false;
 	}
+
 	/// <summary>
 	/// Update images' colors with given blocksInfo
 	/// </summary>
@@ -391,15 +366,19 @@ public class BoardManager : MonoBehaviour
 			blockImages[i].gameObject.SetActive(true);
 			blockImages[i].color = blocksInfo[i].BlockColor.GetColor();
 		}
+		//!!!!!!!!!!!!
 		//Sequential new block enabling, did not like it. So it is deactivated, see below explanation for more info
+		//!!!!!!!!!!!!
 		//blockImages[0].gameObject.SetActive(true);
 		//activateBlockIndex = 1;
 		//if (blocksInfo.Count > 1)
 		//	StartCoroutine(ActiveBlocksWithDelay(blockImages, blocksInfo.Count));
 		return blockImages;
 	}
+	//!!!!!!!!!!!!
 	//Sequential new block enabling, did not like it. So it is deactivated.
-	//Activate below and above lines and deactivate "blockImages[i].gameObject.SetActive(true);" on above to see changes.
+	//Activate below and above lines and deactivate "blockImages[i].gameObject.SetActive(true);" in above for loop to see changes.
+	//!!!!!!!!!!!!
 	//private int activateBlockIndex;
 	//IEnumerator ActiveBlocksWithDelay(Image[] blockImages, int maxCount)
 	//{
@@ -411,7 +390,7 @@ public class BoardManager : MonoBehaviour
 	//}
 
 	/// <summary>
-	/// Removes adjacent blocks, calculates score, shows combo, add diamonds.
+	/// Removes adjacent blocks, calculates score, shows combo and adds diamonds.
 	/// </summary>
 	private void ExplodeBlocks()
 	{
@@ -431,22 +410,23 @@ public class BoardManager : MonoBehaviour
 			//Score system is: a single block will yield total number of same-color adjacent blocks
 			//and if there is combo occurs, double the points given.
 			//For example 3 red blocks yield 3*3 = 9 points(3 points per block)
-			//3 red blocks and 4 yellow blocks yield (3*3*2)+(4*4*2) = 50 points. Nnumber 2 is because there is two different same-color adjacent blocks
+			//3 red blocks and 4 yellow blocks yield (3*3*2)+(4*4*2) = 50 points. 2 is because there is two different same-color adjacent blocks
 			score = adjacentBlocksWithSameColor.Count * scoreMultiplier; // score per block
-
 			totalScore += adjacentBlocksWithSameColor.Count * score; //score for total blocks added
 			foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
 			{
 				StartTextAnimation(adjacentBlock, score);
 				adjacentBlock.Clear();
-				//Sequential block destruction, activate Ienumerator ExplosionSequencer, below commented lines and StartCoroutine line, and disable above 2 lines to try
+				//!!!!!!!!!!!!
+				//Sequential block destruction, activate IEnumerator ExplosionSequencer, below commented lines and StartCoroutine line, and disable above 2 lines in foreach loop to try
+				//!!!!!!!!!!!!
 				//scoresOfCollectedAdjacentBlocks.Add(score);
 				//allCollectedAdjacentBlocks.Add(adjacentBlock); // explode blocks(set their color to white etc.)
 			}
 		}
-
 		//StartCoroutine(ExplosionSequencer(allCollectedAdjacentBlocks, scoresOfCollectedAdjacentBlocks));
-		int matchCountAddition = matchedBlocksList.Count * matchedBlocksList.Count;
+
+		int matchCountAddition = matchedBlocksList.Count * matchedBlocksList.Count; // if player does combo give more matchCount addition
 		IncreaseMatchCount(matchCountAddition);
 		// if player does combo, show it
 		if (matchedBlocksList.Count > 1)
@@ -455,12 +435,13 @@ public class BoardManager : MonoBehaviour
 			comboText.GetComponent<Animator>().SetTrigger("combo");
 		}
 
-		//SetScore(updatedScore)
 		ControlDifficulty();
-		AddToScore(totalScore);
+		AddToScore(totalScore); // add total collected score in this turn and add it to our total score
 		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
 	}
+	//!!!!!!!!!!!!
 	//Explodes blocks sequentially
+	//!!!!!!!!!!!!
 	//IEnumerator ExplosionSequencer(List<Block> allCollectedAdjacentBlocks, List<int> scoresOfCollectedAdjacentBlocks)
 	//{
 	//	yield return new WaitForSeconds(0.02f);
@@ -479,7 +460,7 @@ public class BoardManager : MonoBehaviour
 	/// <summary>
 	/// When player first touches a block, Update touched block and start touching process.
 	/// </summary>
-	/// <param name="selectedBlock"></param>
+	/// <param name="selectedBlock">Touched block</param>
 	public void StartSelection(Block selectedBlock)
 	{
 		//Checks if block is white
@@ -511,9 +492,9 @@ public class BoardManager : MonoBehaviour
 
 	/// <summary>
 	/// <para>When player continues to drag his finger on other blocks</para>
-	/// <para>Do stuff accordingly(revert selection or add newblocks in queue).</para>
+	/// <para>Do stuff accordingly(revert selection or add newblocks within the queue).</para>
 	/// </summary>
-	/// <param name="selectedBlock"></param>
+	/// <param name="selectedBlock">Touched block</param>
 	public void SetSelectedBlock(Block selectedBlock)
 	{
 		//if player intends to add new block on queue to grid which is adjacent to previous one 
@@ -576,16 +557,12 @@ public class BoardManager : MonoBehaviour
 
 				SoundManager.Instance.PlayRetrieveBlock();
 				SoundManager.Instance.ResetPlaceBlockPitch();
-				gameState = GameState.Idle;
+				gameState = GameState.Idle; //selection is over so set it back to idle
 			}
 			else // player placed all of given blocks to grid
-			{
 				AppendSelection();
-
-			}
 			//regardless of the conditions above, the player is released fingers
 			//and we need to reset the selectionCount and blocksPlaced list
-			//and set the gamestate back to idle
 			selectionCount = 0;
 			blocksPlaced.Clear();
 		}
@@ -622,6 +599,9 @@ public class BoardManager : MonoBehaviour
 	#endregion
 
 	#region Difficulty Settings-------------------------------------------------------------------------------------------------------------------------------
+	/// <summary>
+	/// Controls if difficulty bracket is reached and increase difficulty if necessary
+	/// </summary>
 	private void ControlDifficulty()
 	{
 		if (currentDifficultyBracket != difficultyBrackets.Length) // if we didn't reach our last bracket
@@ -638,7 +618,9 @@ public class BoardManager : MonoBehaviour
 			}
 		}
 	}
-	
+	/// <summary>
+	/// Resets difficulty for new game
+	/// </summary>
 	private void ResetDifficulty()
 	{
 		difficultyCounter = 0;
@@ -685,10 +667,10 @@ public class BoardManager : MonoBehaviour
 		else SoundManager.Instance.PlayInvalid();
 	}
 
-	/// <summary>
-	/// Checks whole grid to see if there are any colored block exists, terminates check immeditely when it founds a colored block
-	/// </summary>
-	/// <returns></returns>
+/// <summary>
+/// Shows/Hides hammer image on colored blocks, sets game state to HammerPowerUp if parameter is true
+/// </summary>
+/// <param name="isActivate">Show or hide hammer images</param>
 	private void ProcessHammerPowerUp(bool isActivate) // this check is needed for hammer powerup
 	{
 		bool isAnyColoredBlockExist = false;
@@ -724,6 +706,10 @@ public class BoardManager : MonoBehaviour
 	#endregion
 
 	#region Currency Section -------------------------------------------------------------------------------------------------------------------------------
+	/// <summary>
+	/// Adds given parameter global match counter and adds diamonds if condition is true
+	/// </summary>
+	/// <param name="increaseAmount">Amount to increase matchCount</param>
 	private void IncreaseMatchCount(int increaseAmount)
 	{
 		matchCount += increaseAmount;
@@ -734,11 +720,18 @@ public class BoardManager : MonoBehaviour
 		}
 		UpdateMatchCount();
 	}
+	/// <summary>
+	/// Adds prearranged diamond reward to diamond bank
+	/// </summary>
 	private void AddDiamonds()
 	{
 		UpdateDiamondBank(diamondBank + diamondReward);
 		
 	}
+	/// <summary>
+	/// Check if player has adequate diamonds to spend
+	/// </summary>
+	/// <returns></returns>
 	private bool AreDiamondsSufficient()
 	{
 		bool rBool = false;
@@ -748,23 +741,35 @@ public class BoardManager : MonoBehaviour
 		}
 		return rBool;
 	}
+	/// <summary>
+	/// Deducts prearranged powerup price from diamond bank
+	/// </summary>
 	private void DeductDiamonds()
 	{
 		diamondBank -= powerUpDiamondPrice;
 		DiamondsDeducted();
 		UpdateDiamondBank();
 	}
+
 	void DiamondsDeducted()
 	{
 		deductionPanel.gameObject.SetActive(false);
 		deductionPanel.gameObject.SetActive(true); //animation starts 
 	}
+	/// <summary>
+	/// Update it's text
+	/// </summary>
+	/// <param name="_diamondBank">Manually assign diamondBank</param>
 	private void UpdateDiamondBank(int _diamondBank = -1)
 	{
 		if (_diamondBank != -1)
 		diamondBank = _diamondBank;
 		diamondBankText.text = diamondBank.ToString();
 	}
+	/// <summary>
+	/// Update match count and it's visual bar
+	/// </summary>
+	/// <param name="_matchCount"></param>
 	private void UpdateMatchCount(int _matchCount = -1)
 	{
 		if (_matchCount != -1)
@@ -773,8 +778,10 @@ public class BoardManager : MonoBehaviour
 			matchCountBar.fillAmount = 1 / (float)( (float)matchesNeededToGiveDiamond / (float)matchCount );
 		else matchCountBar.fillAmount = 0;
 	}
-
-	public void GetDiamondsForFree()
+	/// <summary>
+	/// Save yourself from writing "greedisgood" and just touch a button! :)
+	/// </summary>
+	public void GetDiamondsForFree() // Used by AddDiamond button
 	{
 		UpdateDiamondBank(diamondBank + 1000);
 	}
@@ -804,12 +811,16 @@ public class BoardManager : MonoBehaviour
 	/// <summary>
 	/// Adds to total score
 	/// </summary>
-	/// <param name="addition"></param>
+	/// <param name="addition">Amount to add</param>
 	private void AddToScore(int addition)
 	{
 		SetScore(updatedScore + addition, true);
 
 	}
+	/// <summary>
+	/// Either updates highscore if current score is higher than it or manually assigns it
+	/// </summary>
+	/// <param name="optionalScore">Manual override of high score</param>
 	private void UpdateHighScore(int optionalScore = -1)
 	{
 		if (optionalScore == -1)
@@ -846,15 +857,15 @@ public class BoardManager : MonoBehaviour
 	/// <summary>
 	/// Starts floating text animation for every block that is going to be exploded.
 	/// </summary>
-	/// <param name="block">block to be exploded.</param>
-	/// <param name="points">points to be shown.</param>
+	/// <param name="block">Block to be exploded.</param>
+	/// <param name="points">Points to be shown.</param>
 	private void StartTextAnimation(Block block, int points)
 	{
-		Animator an = block.GetComponentInChildren<Animator>();
-		Text tx = block.GetComponentInChildren<Text>();
-		tx.color = block.info.BlockColor.GetColor();
-		tx.text = "+" + points.ToString();
-		an.SetTrigger("startFloat");
+		Animator blockAnim = block.GetComponentInChildren<Animator>();
+		Text blockText = block.GetComponentInChildren<Text>();
+		blockText.color = block.info.BlockColor.GetColor();
+		blockText.text = "+" + points.ToString();
+		blockAnim.SetTrigger("startFloat");
 	}
 	#endregion
 
