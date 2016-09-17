@@ -7,10 +7,7 @@ using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Collections.Generic;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: 
+/// Description: Save/load operations of the game.
 /// </summary>
 public static class SaveLoad
 {

@@ -4,10 +4,7 @@
 using UnityEngine;
 using System.Collections;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: 
+/// Description: Utility class for our operations. Currently only containing IntLerp
 /// </summary>
 public static class Utilities
 {

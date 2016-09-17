@@ -4,10 +4,7 @@
 using UnityEngine;
 using System.Collections;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: Base class for holding primitive block data.
+/// Description: Base class for holding primitive block data. Dividing data class from Monobehaviour class enables us to serialize our data.
 /// </summary>
 [System.Serializable]
 public class BlockInfo

@@ -4,10 +4,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 /// <summary>
-/// Referring To: 
-/// Referenced From: EventController.cs
 /// Attached To: Block
-/// Description: Holder class for BlockInfo.
+/// Description: MonoBehaviour representation class for our BlockInfo.
 /// </summary>
 
 public class Block : MonoBehaviour {

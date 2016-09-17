@@ -7,10 +7,8 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using UnityEngine.Events;
 /// <summary>
-/// Referring To: BoardManager.cs(Singleton)
-/// Referenced From: EventController.cs
-/// Attached To: SelectionManager
-/// Description: Handles selection activities(when player presses and drags).
+/// Attached To: BoardManager
+/// Description: Handless all board activities(managing grid, adding,destroying blocks, Touch & Drag & Release operations, updating animations, difficulty, Powerups, Diamond management, score)
 /// </summary>
 [System.Serializable]
 public class GridSize
@@ -18,8 +16,9 @@ public class GridSize
 	public int X;
 	public int Y;
 }
-public class SelectionManager : MonoBehaviour
+public class BoardManager : MonoBehaviour
 {
+	#region Variables
 	//Grid
 	public GridSize gridSize;
 	//Initial class implementation
@@ -27,6 +26,18 @@ public class SelectionManager : MonoBehaviour
 	private ColorBase colorBase = new ColorBase();
 	//Default block color of grid
 	public Color defaultBlockColor;
+	//Currency Settings
+	[Header("Hover MatchesNeededToGiveDiamond to see info")]
+	[Tooltip("Diamond will be given to player after he matches this much block")]
+	public int matchesNeededToGiveDiamond;
+	int matchCount;
+	[Tooltip("Number of diamonds that player will get")]
+	public int diamondReward;
+	private int diamondBank = 1000;
+	public int powerUpDiamondPrice = 250;
+	public Text diamondBankText;
+	public Image matchCountBar;
+	public GameObject deductionPanel;
 	//Blocks placed holders
 	Block currentBlock;
 	Block previousBlock;
@@ -74,6 +85,8 @@ public class SelectionManager : MonoBehaviour
 	float defaultCellSizeY = 64;
 	#endregion
 
+	#endregion
+
 	#region Unity MonoBehaviours -------------------------------------------------------------------------------------------------------------------------------
 	void Awake()
 	{
@@ -98,6 +111,7 @@ public class SelectionManager : MonoBehaviour
 		GridLayoutGroup gamePanelGLG = gamePanel.GetComponent<GridLayoutGroup>();
 		gamePanelGLG.constraintCount = Constants.RowCount; // if grid size is changed, adjust constrain count accordingly
 
+		diamondBankText.text = diamondBank.ToString();
 		#region safecheck
 		if (gamePanelGLG.spacing.x != defaultSpacingX || gamePanelGLG.spacing.y != defaultSpacingY)
 		{
@@ -166,13 +180,15 @@ public class SelectionManager : MonoBehaviour
 	public GameVariables GetGameVariables()
 	{
 		bool isHammerUsed = gameState == GameState.HammerPowerUp ? true : false;
-		return new GameVariables(updatedScore, highScore, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed, SoundManager.Instance.isSoundsActive);
+		return new GameVariables(updatedScore, highScore, diamondBank, matchCount, difficultyCounter, currentDifficultyBracket, (int)gameState, isHammerUsed, isHintUsed, SoundManager.Instance.isSoundsActive);
 	}
 
 	public void SetGameVariables(GameVariables gameVariables)
 	{
 		SetScore(gameVariables.score, false);
 		UpdateHighScore(gameVariables.highScore);
+		UpdateDiamondBank(gameVariables.diamondBank);
+		UpdateMatchCount(gameVariables.matchCount);
 		difficultyCounter = gameVariables.difficultyCounter;
 		currentDifficultyBracket = gameVariables.currentDifficultyBracket;
 		gameState = (GameState)gameVariables.gameStateIndex;
@@ -190,7 +206,7 @@ public class SelectionManager : MonoBehaviour
 	}
 	#endregion
 
-	#region Grid Management & Block Creation -------------------------------------------------------------------------------------------------------------------------------
+	#region Grid Management -------------------------------------------------------------------------------------------------------------------------------
 	/// <summary>
 	/// Generates a Board with prearranged Row and Column count(See Constants class) and assigns them to [blocks] 2D array.
 	/// </summary>
@@ -248,6 +264,10 @@ public class SelectionManager : MonoBehaviour
 	/// </summary>
 	public void ResetBoard() // used from GameOverPanel(Game object in hierarchy)
 	{
+		if (gameState == GameState.HammerPowerUp)
+			ProcessHammerPowerUp(false);
+		if (isHintUsed)
+			ClearHintBlocks();
 		gameState = GameState.Idle;
 		for (int i = 0; i < Constants.ColumnCount; i++)
 		{
@@ -264,6 +284,11 @@ public class SelectionManager : MonoBehaviour
 		Animator boardAnimator = gamePanel.GetComponent<Animator>();
 		boardAnimator.SetTrigger("reset");
 	}
+
+
+	#endregion
+
+	#region Block Creation & Destruction
 
 	public enum BlockCreationType
 	{ Actual, Hint }
@@ -292,9 +317,7 @@ public class SelectionManager : MonoBehaviour
 		if (isHintUsed) //transfer hintblocks to new blocks
 		{
 			blocksInfo = new List<BlockInfo>(hintBlocks); // create it as new list so we don't reference the hintBlocks and can reset it
-			hintBlocks.Clear();
-			hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks); // we don't need hintblocks so disable their image
-			isHintUsed = false;
+			ClearHintBlocks();
 		}
 		else // create random new blocks  here
 		{
@@ -318,6 +341,12 @@ public class SelectionManager : MonoBehaviour
 		}
 
 	}
+	private void ClearHintBlocks()
+	{
+		hintBlocks.Clear();
+		hintBlockImages = ProcessBlocks(hintBlockImages, hintBlocks); // we don't need hintblocks so disable their image
+		isHintUsed = false;
+	}
 	/// <summary>
 	/// Update images' colors with given blocksInfo
 	/// </summary>
@@ -330,7 +359,7 @@ public class SelectionManager : MonoBehaviour
 
 		for (int i = 0; i < blocksInfo.Count; i++)
 		{
-			blockImages[i].gameObject.SetActive(true); 
+			blockImages[i].gameObject.SetActive(true);
 			blockImages[i].color = blocksInfo[i].BlockColor.GetColor();
 		}
 		//Sequential new block enabling, did not like it. So it is deactivated, see below explanation for more info
@@ -350,6 +379,70 @@ public class SelectionManager : MonoBehaviour
 	//	activateBlockIndex++;
 	//	if (activateBlockIndex != maxCount)
 	//		StartCoroutine(ActiveBlocksWithDelay(blockImages, maxCount));
+	//}
+
+	/// <summary>
+	/// Removes adjacent blocks, calculates score, shows combo, add diamonds.
+	/// </summary>
+	private void ExplodeBlocks()
+	{
+		List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists(); // retrieve matched block list
+		if (matchedBlocksList.Count == 1) // if no combo occurs
+			SoundManager.Instance.PlayBlockExplode();
+		else // if combo occurs
+			SoundManager.Instance.PlayBlockExplodeCombo();
+
+		int scoreMultiplier = matchedBlocksList.Count;
+		int score = 0;
+		int totalScore = 0;
+		//List<Block> allCollectedAdjacentBlocks = new List<Block>();
+		//List<int> scoresOfCollectedAdjacentBlocks = new List<int>();
+		foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
+		{
+			//Score system is: a single block will yield total number of same-color adjacent blocks
+			//and if there is combo occurs, double the points given.
+			//For example 3 red blocks yield 3*3 = 9 points(3 points per block)
+			//3 red blocks and 4 yellow blocks yield (3*3*2)+(4*4*2) = 50 points. Nnumber 2 is because there is two different same-color adjacent blocks
+			score = adjacentBlocksWithSameColor.Count * scoreMultiplier; // score per block
+
+			totalScore += adjacentBlocksWithSameColor.Count * score; //score for total blocks added
+			foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
+			{
+				StartTextAnimation(adjacentBlock, score);
+				adjacentBlock.Clear();
+				//Sequential block destruction, activate Ienumerator ExplosionSequencer, below commented lines and StartCoroutine line, and disable above 2 lines to try
+				//scoresOfCollectedAdjacentBlocks.Add(score);
+				//allCollectedAdjacentBlocks.Add(adjacentBlock); // explode blocks(set their color to white etc.)
+			}
+		}
+
+		//StartCoroutine(ExplosionSequencer(allCollectedAdjacentBlocks, scoresOfCollectedAdjacentBlocks));
+		int matchCountAddition = matchedBlocksList.Count * matchedBlocksList.Count;
+		IncreaseMatchCount(matchCountAddition);
+		// if player does combo, show it
+		if (matchedBlocksList.Count > 1)
+		{
+			comboText.text = "x" + matchedBlocksList.Count.ToString();
+			comboText.GetComponent<Animator>().SetTrigger("combo");
+		}
+
+		//SetScore(updatedScore)
+		ControlDifficulty();
+		AddToScore(totalScore);
+		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
+	}
+	//Explodes blocks sequentially
+	//IEnumerator ExplosionSequencer(List<Block> allCollectedAdjacentBlocks, List<int> scoresOfCollectedAdjacentBlocks)
+	//{
+	//	yield return new WaitForSeconds(0.02f);
+	//	if (allCollectedAdjacentBlocks.Count > 0) // if there is any element
+	//	{
+	//		StartTextAnimation(allCollectedAdjacentBlocks[0], scoresOfCollectedAdjacentBlocks[0]);
+	//		allCollectedAdjacentBlocks[0].Clear();// explode blocks(set their color to white etc.)
+	//		allCollectedAdjacentBlocks.RemoveAt(0);
+	//		scoresOfCollectedAdjacentBlocks.RemoveAt(0);
+	//		StartCoroutine(ExplosionSequencer(allCollectedAdjacentBlocks, scoresOfCollectedAdjacentBlocks));
+	//	}
 	//}
 	#endregion
 
@@ -497,47 +590,6 @@ public class SelectionManager : MonoBehaviour
 		currentBlock = null;
 		selectionCount = 0;
 	}
-
-	/// <summary>
-	/// Removes adjacent blocks, calculates score, shows combo.
-	/// </summary>
-	private void ExplodeBlocks()
-	{
-		List<List<Block>> matchedBlocksList = blocks.GetMatchedBlockLists(); // retrieve matched block list
-		if (matchedBlocksList.Count == 1) // if no combo occurs
-			SoundManager.Instance.PlayBlockExplode();
-		else // if combo occurs
-			SoundManager.Instance.PlayBlockExplodeCombo();
-
-		int scoreMultiplier = matchedBlocksList.Count;
-		int score = 0;
-		int totalScore = 0;
-		foreach (List<Block> adjacentBlocksWithSameColor in matchedBlocksList)
-		{
-			//Score system is: a single block will yield total number of same-color adjacent blocks
-			//and if there is combo occurs, double the points given.
-			//For example 3 red blocks yield 3*3 = 9 points(3 points per block)
-			//3 red blocks and 4 yellow blocks yield (3*3*2)+(4*4*2) = 50 points. Nnumber 2 is because there is two different same-color adjacent blocks
-			score = adjacentBlocksWithSameColor.Count * scoreMultiplier; // score per block
-			totalScore += adjacentBlocksWithSameColor.Count * score; //score for total blocks added
-			foreach (Block adjacentBlock in adjacentBlocksWithSameColor)
-			{
-				StartTextAnimation(adjacentBlock, score);
-				adjacentBlock.Clear(); // explode blocks(set their color to white etc.)
-			}
-		}
-		// if player does combo, show it
-		if (matchedBlocksList.Count > 1)
-		{
-			comboText.text = "x" + matchedBlocksList.Count.ToString();
-			comboText.GetComponent<Animator>().SetTrigger("combo");
-		}
-
-		//SetScore(updatedScore)
-		ControlDifficulty();
-		AddToScore(totalScore);
-		blocks.ClearMatchedBlockLists(); // we are done with the list and we can clear it now for further turns
-	}
 	#endregion
 
 	#region Difficulty Settings-------------------------------------------------------------------------------------------------------------------------------
@@ -570,25 +622,38 @@ public class SelectionManager : MonoBehaviour
 	public void HammerPowerUp()// called from Hammer Button
 	{
 		//only enable hammer power up button to be clicked if there are any colored blocks exist in grid
-		if (gameState == GameState.Idle)
+		if (gameState == GameState.Idle && AreDiamondsSufficient())
+		{
 			ProcessHammerPowerUp(true);
+		}
+		else if(gameState == GameState.HammerPowerUp)
+		{
+			gameState = GameState.Idle;
+			ProcessHammerPowerUp(false);
+		}
 	}
 
 	public void HintPowerUp()// called from Hint Button
 	{
-		if (gameState == GameState.Idle && !isHintUsed)
+		if ( (gameState != GameState.GameOver) && !isHintUsed && AreDiamondsSufficient() )
 		{
 			CreateBlocks(BlockCreationType.Hint);
 			isHintUsed = true;
 			SoundManager.Instance.PlayHintPowerUp();
+			DeductDiamonds();
 		}
 		else SoundManager.Instance.PlayInvalid();
 	}
 
 	public void SkipPowerUp()// called from Skip Button
 	{
-		if (gameState == GameState.Idle)
+		if (gameState != GameState.GameOver && AreDiamondsSufficient())
+		{
 			CreateBlocks(BlockCreationType.Actual);
+			SoundManager.Instance.PlayButtonClick();
+			DeductDiamonds();
+		}
+		else SoundManager.Instance.PlayInvalid();
 	}
 
 	/// <summary>
@@ -609,7 +674,10 @@ public class SelectionManager : MonoBehaviour
 				}
 			}
 		}
-		if (isAnyColoredBlockExist && isActivate) gameState = GameState.HammerPowerUp;
+		if (isAnyColoredBlockExist && isActivate)
+		{
+			gameState = GameState.HammerPowerUp;
+		}
 	}
 
 	/// <summary>
@@ -618,6 +686,7 @@ public class SelectionManager : MonoBehaviour
 	/// <param name="selectedBlock">Block to be removed.</param>
 	private void RemoveBlock(Block selectedBlock)
 	{
+		DeductDiamonds();
 		ProcessHammerPowerUp(false);
 		selectedBlock.Clear(); // remove it's colors
 		SoundManager.Instance.PlayHammerPowerUp();
@@ -625,8 +694,64 @@ public class SelectionManager : MonoBehaviour
 	}
 	#endregion
 
-	#region Score section-------------------------------------------------------------------------------------------------------------------------------
+	#region Currency Section -------------------------------------------------------------------------------------------------------------------------------
+	private void IncreaseMatchCount(int increaseAmount)
+	{
+		matchCount += increaseAmount;
+		if (matchCount >= matchesNeededToGiveDiamond)
+		{
+				matchCount -= matchesNeededToGiveDiamond;
+				AddDiamonds();
+		}
+		UpdateMatchCount();
+	}
+	private void AddDiamonds()
+	{
+		UpdateDiamondBank(diamondBank + diamondReward);
+		
+	}
+	private bool AreDiamondsSufficient()
+	{
+		bool rBool = false;
+		if (diamondBank >= powerUpDiamondPrice)
+		{
+			rBool = true;
+		}
+		return rBool;
+	}
+	private void DeductDiamonds()
+	{
+		diamondBank -= powerUpDiamondPrice;
+		DiamondsDeducted();
+		UpdateDiamondBank();
+	}
+	void DiamondsDeducted()
+	{
+		deductionPanel.gameObject.SetActive(false);
+		deductionPanel.gameObject.SetActive(true); //animation starts 
+	}
+	private void UpdateDiamondBank(int _diamondBank = -1)
+	{
+		if (_diamondBank != -1)
+		diamondBank = _diamondBank;
+		diamondBankText.text = diamondBank.ToString();
+	}
+	private void UpdateMatchCount(int _matchCount = -1)
+	{
+		if (_matchCount != -1)
+		matchCount = _matchCount;
+		if (matchCount > 0)
+			matchCountBar.fillAmount = 1 / (float)( (float)matchesNeededToGiveDiamond / (float)matchCount );
+		else matchCountBar.fillAmount = 0;
+	}
 
+	public void GetDiamondsForFree()
+	{
+		UpdateDiamondBank(diamondBank + 1000);
+	}
+	#endregion
+
+	#region Score section-------------------------------------------------------------------------------------------------------------------------------
 
 	/// <summary>
 	/// Sets score either with animation or directly.

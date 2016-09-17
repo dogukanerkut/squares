@@ -4,10 +4,8 @@
 using UnityEngine;
 using System.Collections;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: 
+/// Attached To: SoundManager
+/// Description: Manager class to handle all sound operations[Singleton Class]
 /// </summary>
 public class SoundManager : MonoBehaviour {
 

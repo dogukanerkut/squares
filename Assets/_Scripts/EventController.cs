@@ -3,41 +3,39 @@
 //Contact: dogukanerkut@gmail.com
 using UnityEngine;
 /// <summary>
-/// Referring To: SelectionManager.cs
-/// Referenced From: 
 /// Attached To: Block
-/// Description: Controls the Event System.
+/// Description: Controls the Event System(player's input)
 /// </summary>
 public class EventController : MonoBehaviour
 {
 	
-	private SelectionManager selectionManager; // Assigned in Editor
+	private BoardManager boardManager; // Assigned in Editor
 
 	void Awake()
 	{
-		selectionManager = GameObject.FindGameObjectWithTag(Constants.Tag_SelectionManager).GetComponent<SelectionManager>();
+		boardManager = GameObject.FindGameObjectWithTag(Constants.Tag_BoardManager).GetComponent<BoardManager>();
 	}
 
 	public void OnPointerEnter()
 	{
-		if (SelectionManager.gameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
+		if (BoardManager.gameState == GameState.SelectionStarted) // if the selection started during OnPointerEnter event
 		{
 			Block selectedBlock = GetComponent<Block>();
-			selectionManager.SetSelectedBlock(selectedBlock);
+			boardManager.SetSelectedBlock(selectedBlock);
 		}
 		
 	}
 	public void OnPointerDown()
 	{
 		Block selectedBlock = GetComponent<Block>();
-			selectionManager.StartSelection(selectedBlock);
+			boardManager.StartSelection(selectedBlock);
 	}
 
 	void Update()
 	{
 		if (Input.GetMouseButtonUp(0))
 		{
-			selectionManager.TerminateSelection();
+			boardManager.TerminateSelection();
 		}
 	}
 

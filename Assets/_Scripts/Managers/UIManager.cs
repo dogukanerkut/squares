@@ -5,19 +5,21 @@ using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: 
+/// Attached To: UIManager
+/// Description: Handles basic UI operations.
 /// </summary>
 public class UIManager : MonoBehaviour
 {
 	//Grid
 	public GameObject gameOverPanel;
-	public SelectionManager selectionManager;
+	public BoardManager boardManager;
 	public Transform gameBoardCanvas;
 	//Hammer Bonus
-	public Transform hammerTransform;
+	public Animator hammerButtonAnim;
+	//Hint Bonus
+	public Animator hintButtonAnim;
+	//Skip Bonus
+	public Animator skipButtonAnim;
 	//sound button
 	public Image soundImage;
 	public Sprite soundSprite;
@@ -43,15 +45,19 @@ public class UIManager : MonoBehaviour
 
 	public void HammerPressed()
 	{
-		if (SelectionManager.gameState == GameState.HammerPowerUp)
-		{
-			Animator anim = hammerTransform.GetComponent<Animator>();
-			anim.SetTrigger("isPressed");
-			//	hammerButton.image.sprite = hammerSpritePressed;
+		hammerButtonAnim.SetTrigger("isPressed");
+		if (BoardManager.gameState == GameState.HammerPowerUp)
 			SoundManager.Instance.PlayButtonClick();
-		}
 		else SoundManager.Instance.PlayInvalid();
 		
+	}
+	public void HintPressed()
+	{
+		hintButtonAnim.SetTrigger("isPressed");
+	}
+	public void SkipPressed()
+	{
+		skipButtonAnim.SetTrigger("isPressed");
 	}
 	public void SoundButton()
 	{

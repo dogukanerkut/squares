@@ -4,10 +4,7 @@
 using UnityEngine;
 using System.Collections;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: 
+/// Description: UnityEngine's Color class can't be serialized, we need this class to serialize our colors.
 /// </summary>
 [System.Serializable]
 public class SerializableColor

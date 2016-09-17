@@ -5,9 +5,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
 /// Description: Responsible from assigning colors to newly created blocks and adjusting difficulty(increasing color palette).
 /// </summary>
 public class ColorBase
@@ -71,22 +68,59 @@ public class ColorBase
 			blockInfos[i].BlockColor = new SerializableColor(GetRandomColor());
 		}
 		//include new color if it's not added to new blocks
+
+
+		if (blockInfos.Count >= 4)
+		{
+			bool isAllBlocksSameColor = true;
+			for (int i = 1; i < blockInfos.Count; i++)
+			{
+				if (blockInfos[0].BlockColor.GetColor() != blockInfos[i].BlockColor.GetColor()) // if even one of them is not same, false allSameColor
+				{
+					isAllBlocksSameColor = false;
+					break;
+				}
+			}
+			IncludeNewColorOnFirstTime(blockInfos);
+
+			PreventAllBlocksToBeSameColor(blockInfos, isAllBlocksSameColor);
+		}
+		//return blockInfos;
+	}
+
+	private void IncludeNewColorOnFirstTime(List<BlockInfo> blockInfos)
+	{
 		if (isDifficultyJustIncreased)
 		{
 			bool isNewColorAdded = false;
 			for (int i = 0; i < blockInfos.Count; i++)
 			{
-				if (currentColors[currentColors.Count - 1] ==blockInfos[i].BlockColor.GetColor())
+				if (currentColors[currentColors.Count - 1] == blockInfos[i].BlockColor.GetColor()) // if new color is not in list
 				{
 					isNewColorAdded = true;
 					break;
 				}
-            }
-			if (!isNewColorAdded)
-				blockInfos[0].BlockColor = new SerializableColor(currentColors[currentColors.Count - 1]);
+			}
+			if (!isNewColorAdded) // if new color is not in list override it to a random block
+				blockInfos[Random.Range(0, blockInfos.Count - 1)].BlockColor = new SerializableColor(currentColors[currentColors.Count - 1]);
 			isDifficultyJustIncreased = false;
 		}
-		//return blockInfos;
+	}
+	private void PreventAllBlocksToBeSameColor(List<BlockInfo> blockInfos, bool isAllBlocksSameColor)
+	{
+		while (isAllBlocksSameColor) // while all blocks are same color
+		{
+			int rnd = Random.Range(0, blockInfos.Count - 1);
+			blockInfos[rnd].BlockColor = new SerializableColor(GetRandomColor());
+			for (int i = 0; i < blockInfos.Count; i++)
+			{
+				if (blockInfos[0].BlockColor.GetColor() != blockInfos[i].BlockColor.GetColor()) // if even one of them is not same, false allSameColor
+				{
+					isAllBlocksSameColor = false;
+					break;
+				}
+			}
+		}
 	}
 	public Color GetLatestColor()
 	{

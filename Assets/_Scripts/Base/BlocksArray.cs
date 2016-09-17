@@ -37,7 +37,8 @@ public class BlocksArray
 	/// <summary>
 	/// Checks if newly selected block is both available and is adjacent to current block and updates local block variables if check is true.
 	/// </summary>
-	/// <param name="newBlockInfo"></param>
+	/// <param name="currentBlockInfo">Already placed block.</param>
+	/// <param name="newBlockInfo">Block to be placed.</param>
 	/// <returns></returns>
 	public bool IsBlocksAdjacentAndAvailable(BlockInfo currentBlockInfo, BlockInfo newBlockInfo)
 	{
@@ -66,7 +67,7 @@ public class BlocksArray
 	}
 
 	/// <summary>
-	/// Checks adjacent blocks of given block1 and compares if block2 is one of them(if it's adjacent to block1).
+	/// Checks adjacent blocks(left, right, up and down) of given block1 and compares if block2 is one of them(if it's adjacent to block1).
 	/// </summary>
 	/// <param name="blockInfo1">Main block to check adjacency.</param>
 	/// <param name="blockInfo2">Block to be compared to block1's adjacency.</param>
@@ -219,7 +220,7 @@ public class BlocksArray
                 foreach (BlockInfo info in adjacentBlocksWithSameColor) //Transfer them to Block component
 					adjacentBlockComponents.Add(blocks[info.Row, info.Column].GetComponent<Block>());
 
-				// transfer them to main list for selectionManager to destroy them all.
+				// transfer them to main list for boardManager to destroy them all.
 				matchedBlockLists.Add(adjacentBlockComponents); 
 			}
 			else // if there are no more blocks to check and collected adjacent blocks are less than 3

@@ -5,20 +5,18 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 /// <summary>
-/// Referring To: 
-/// Referenced From: 
-/// Attached To: 
-/// Description: 
+/// Attached To: SaveLoadManager
+/// Description: Manager class for our save/load operations.
 /// </summary>
 public class SaveLoadManager : MonoBehaviour
 {
 	// Use this for initialization
-	private SelectionManager selectionManager;
+	private BoardManager boardManager;
 	public bool saveData;
 	public bool loadData;
 	void Awake()
 	{
-		selectionManager = GameObject.FindGameObjectWithTag(Constants.Tag_SelectionManager).GetComponent<SelectionManager>();
+		boardManager = GameObject.FindGameObjectWithTag(Constants.Tag_BoardManager).GetComponent<BoardManager>();
 		if (loadData) LoadGame();
 
 		#region safecheck
@@ -39,7 +37,7 @@ public class SaveLoadManager : MonoBehaviour
 			GameVariables gameVariables = (GameVariables)SaveLoad.LoadGame(ref position);
 			List<BlockInfo> hintBlockInfos = (List<BlockInfo>)SaveLoad.LoadGame(ref position);
 
-			BlocksArray blocksToBeLoaded = selectionManager.GetBlocksArray();
+			BlocksArray blocksToBeLoaded = boardManager.GetBlocksArray();
 
 			for (int i = 0; i < Constants.ColumnCount; i++)
 			{
@@ -51,10 +49,10 @@ public class SaveLoadManager : MonoBehaviour
 				}
 			}
 
-			selectionManager.FillBlocksArray(blocksToBeLoaded, currentBlockInfos);
-			selectionManager.SetGameVariables(gameVariables);
+			boardManager.FillBlocksArray(blocksToBeLoaded, currentBlockInfos);
+			boardManager.SetGameVariables(gameVariables);
 			if (gameVariables.isHintUsed)
-				selectionManager.CreateHintBlocksFromSave(hintBlockInfos);
+				boardManager.CreateHintBlocksFromSave(hintBlockInfos);
 
 		}
 
@@ -63,9 +61,9 @@ public class SaveLoadManager : MonoBehaviour
 	{
 		if (saveData)
 		{
-			BlocksArray blocks = selectionManager.GetBlocksArray();
+			BlocksArray blocks = boardManager.GetBlocksArray();
 			BlockInfo[,] blockInfosToBeSaved = new BlockInfo[Constants.RowCount, Constants.ColumnCount];
-			GameVariables gameVariables = selectionManager.GetGameVariables();
+			GameVariables gameVariables = boardManager.GetGameVariables();
 			for (int i = 0; i < Constants.ColumnCount; i++)
 			{
 				for (int j = 0; j < Constants.RowCount; j++)
@@ -75,7 +73,7 @@ public class SaveLoadManager : MonoBehaviour
 					//bInfo = loadedBlockInfos[j, i];
 				}
 			}
-			SaveLoad.SaveGame(blockInfosToBeSaved, selectionManager.GetBlocks(SelectionManager.BlockCreationType.Actual), gameVariables, selectionManager.GetBlocks(SelectionManager.BlockCreationType.Hint));
+			SaveLoad.SaveGame(blockInfosToBeSaved, boardManager.GetBlocks(BoardManager.BlockCreationType.Actual), gameVariables, boardManager.GetBlocks(BoardManager.BlockCreationType.Hint));
 		}
 	}
 	// Update is called once per frame
