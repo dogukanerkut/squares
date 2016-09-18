@@ -41,7 +41,7 @@ You are good to go! Now play the game before digging the codes to understand the
 
 Some of terms might be confusing without visualisation(like adjacent same-color blocks), so here is a little bit information before reading furthermore.
 
-!!overallgame.png
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/overallgame.png?raw=true "Overall Game Guide")
 
 Also,
 
@@ -83,16 +83,18 @@ First solution is simple: **[Flood-Fill algorithm](https://en.wikipedia.org/wiki
 
 A simple explanation of algorithm is basically give algorithm a block to start, and it will look adjacent blocks(left, right, up and down) to see if they are same color as initial block. If it is, look for their adjacent blocks too, and this goes like this until the condition is not met(not same color). This is called a **recursive method/function**. The algorithm applied in `Check3Match`, stores list of adjacent same-color blocks found to the list seperately, named `matchedBlockLists`. It is a `List<List<Block>>`, a list that holds lists of adjacent blocks. These pictures should make this a bit clearer to grasp:
 
-!!!check3match_iteration.png
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/Check3Match_iteration.png?raw=true "Visualisation of Check3Match Iterations")
 
-!!!matchedBlockLists_visualisation.png
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/matchedBlockLists_visualisation.png?raw=true "matchedBlockLists' collected block list")
+
+So `matchedBlockLists[0]` is blue blocks(red container) and `matchedBlockLists[1]` is green blocks(blue container).
 
 Now to the reason why only using this control is not enough to control **if there are no place to left to put new blocks(for game over)**. To reveal the problem check these pictures:
 
 
-!!!no place to put blocks(4)marked.png
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/no%20place%20to%20put%20blocks(4)marked.png?raw=true "Red container shows there are 4 empty blocks but player can't place to there")
 
-!!!no place to put blocks(5)marked.png
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/no%20place%20to%20put%20blocks(5)marked.png?raw=true "Red container shows there are 5 empty blocks but player still can't place to there")
 
 As you can see, there are 4 or 5 empty blocks but player can't place new blocks. `Check3Match` method will not be able to detect that in this kind of situation that 4 blocks can not be placed. Because it sees 4 or 5 adjacent blocks(respectively) are available and will say that we can put blocks. Nevertheless, we can use this method to do some pre-checking and preparation for deep check:
 
@@ -102,10 +104,11 @@ As you can see, there are 4 or 5 empty blocks but player can't place new blocks.
 
 If all above conditions are failed, `AdvancedEmptyBlockCheck` method comes in. This code only works if adjacent empty block count is atleast 4 and new block count is atleast 4. Code takes a single reference point and starts to iterate it's adjacent empty colors. Now in codes, there is a term `deadEnd` which is to indicate if the block is dead end(surrounded by colored blocks and nothing else). This code adds it's adjacent blocks one by one in order to ensure a single path is taken. It marks dead end blocks, remove it from list(code can't continue on this path anymore because that path does not contain atleast 4 adjacent blocks) and continue checking. If there are no available check for this reference point(initial block) method refreshes all variables and starts a clean control from another reference point. This continues until the method iterates through all possible paths in all reference points, meaning it either will find a single path with 4 blocks or there is no empty blocks enough left for player.
 
-!!no place to put blocks(5)deep check.png
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/no%20place%20to%20put%20blocks(5)deep%20check.png?raw=true "Red container shows there are 4 empty blocks but player can't place to there")
+--------
+![alt text](https://github.com/dogukanerkut/squares/blob/master/documentation%20pictures/no%20place%20to%20put%20blocks(5)deep%20check%20found.png?raw=true "Red container shows there are 4 empty blocks but player can't place to there")
 
-!!no place to put blocks(5)deep check found.png
-
+Eventually code will check path shown in above picture and accept that player can place blocks.
 
 
 ## `BlockInfo.cs` and `Block.cs`
