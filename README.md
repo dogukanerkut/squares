@@ -1,3 +1,33 @@
+# Table of Contents
+
+- [About](https://github.com/dogukanerkut/squares/blob/master/README.md#about)
+  - [Setup in Unity](https://github.com/dogukanerkut/squares/blob/master/README.md#setup-in-unity)
+    - [Opening Project](https://github.com/dogukanerkut/squares/blob/master/README.md#opening-project)
+	- [Setting Up Project](https://github.com/dogukanerkut/squares/blob/master/README.md#setting-up-project)
+	- [Building APK file](https://github.com/dogukanerkut/squares/blob/master/README.md#building-apk-file)
+	- [Glossary](https://github.com/dogukanerkut/squares/blob/master/README.md#glossary)
+- [Code Guideline](https://github.com/dogukanerkut/squares/blob/master/README.md#code-guideline)
+	- [Input System](https://github.com/dogukanerkut/squares/blob/master/README.md#input-system)
+	- [BlocksArray.cs](https://github.com/dogukanerkut/squares/blob/master/README.md#blocksarraycs)
+		- [Concerns](https://github.com/dogukanerkut/squares/blob/master/README.md#concerns)
+		- [Solutions](https://github.com/dogukanerkut/squares/blob/master/README.md#solutions)
+	- [BlockInfo.cs and Block.cs](https://github.com/dogukanerkut/squares/blob/master/README.md#blockinfocs-and-blockcs)
+	- [BlocksCreator.cs and ColorBase.cs](https://github.com/dogukanerkut/squares/blob/master/README.md#blockscreatorcs-and-colorbasecs)
+	- [SaveLoad.cs and SaveLoadManager.cs](https://github.com/dogukanerkut/squares/blob/master/README.md#saveloadcs-and-saveloadmanagercs)
+	- [BoardManager.cs](https://github.com/dogukanerkut/squares/blob/master/README.md#boardmanagercs)
+	- [UIManager.cs](https://github.com/dogukanerkut/squares/blob/master/README.md#uimanagercs)
+- [Customization](https://github.com/dogukanerkut/squares/blob/master/README.md#customization)
+	- [Changing Grid Size](https://github.com/dogukanerkut/squares/blob/master/README.md#changing-grid-size)
+	- [Increasing Number of Maximum New Blocks(Currently 4)](https://github.com/dogukanerkut/squares/blob/master/README.md#increasing-number-of-maximum-new-blockscurrently-4)
+	- [Change Colors of the Game](https://github.com/dogukanerkut/squares/blob/master/README.md#change-colors-of-the-game)
+	- [Changing Default Block Color](https://github.com/dogukanerkut/squares/blob/master/README.md#changing-default-block-color)
+	- [Changing Difficulty Progression & Increasing/Decreasing Brackets](https://github.com/dogukanerkut/squares/blob/master/README.md#changing-difficulty-progression--increasingdecreasing-brackets)
+	- [Currency(Diamond) Settings](https://github.com/dogukanerkut/squares/blob/master/README.md#currencydiamond-settings)
+- [Known Bugs](https://github.com/dogukanerkut/squares/blob/master/README.md#known-bugs)
+- [License](https://github.com/dogukanerkut/squares/blob/master/README.md#license)
+
+
+
 # About
 [![MIT](https://img.shields.io/badge/license-MIT-green.svg?style=plastic)](https://opensource.org/licenses/MIT)
 [![MIT](https://img.shields.io/badge/engine-Unity3D-blue.svg?style=plastic)](http://unity3d.com)
