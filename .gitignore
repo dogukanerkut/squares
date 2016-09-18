@@ -1,8 +1,8 @@
 Library/
 Temp/
 obj/
-.vs/Vertigo_Demo/v14/.suo
-Vertigo_Demo.CSharp.csproj
-Vertigo_Demo.sln
-Vertigo_Demo.userprefs
+.vs/Squares_Demo/v14/.suo
+Squares_Demo.CSharp.csproj
+Squares_Demo.sln
+Squares_Demo.userprefs
 Assembly-CSharp.csproj
